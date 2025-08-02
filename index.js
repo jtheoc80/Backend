@@ -1,107 +1,51 @@
-import dotenv from 'dotenv';
-import express from 'express';
-import { ethers } from 'ethers';
-import contractABI from './abi/ValveChainABI.json' assert { type: 'json' };
-
-dotenv.config();
+const express = require('express');
+const userRoutes = require('./userRoutes');
+const auditLogsRoute = require('./auditLogsRoute');
 
 const app = express();
 app.use(express.json());
 
-const { PRIVATE_KEY, RPC_URL, CONTRACT_ADDRESS, PORT } = process.env;
-
-// Setup ethers provider/wallet
-const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, wallet);
+const PORT = process.env.PORT || 3000;
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ValveChain Sidecar API running' });
+  res.json({ status: 'ValveChain Sidecar API with User Management running' });
 });
 
-// Register Valve (native support)
+// Add user management routes
+app.use('/api/auth', userRoutes);
+app.use('/api', auditLogsRoute);
+
+// Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {
-  const { serialNumber, details } = req.body;
-  if (!serialNumber || !details) {
-    return res.status(400).json({ error: 'serialNumber and details required' });
-  }
-  try {
-    const tx = await contract.registerValve(serialNumber, details);
-    await tx.wait();
-    res.json({ success: true, txHash: tx.hash });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  res.json({ message: 'ValveChain integration temporarily disabled. User management is active.' });
 });
 
-// Transfer Valve (native support)
 app.post('/api/transfer-valve', async (req, res) => {
-  const { serialNumber, to } = req.body;
-  if (!serialNumber || !to) {
-    return res.status(400).json({ error: 'serialNumber and to required' });
-  }
-  try {
-    const tx = await contract.transferValve(serialNumber, to);
-    await tx.wait();
-    res.json({ success: true, txHash: tx.hash });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  res.json({ message: 'ValveChain integration temporarily disabled. User management is active.' });
 });
 
-// Log Maintenance Event
 app.post('/api/maintenance', async (req, res) => {
-  const { serialNumber, description, reportHash } = req.body;
-  if (!serialNumber || !description || !reportHash) {
-    return res.status(400).json({ error: 'serialNumber, description, and reportHash required' });
-  }
-  try {
-    const tx = await contract.logMaintenance(serialNumber, description, reportHash);
-    await tx.wait();
-    res.json({ success: true, txHash: tx.hash });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  res.json({ message: 'ValveChain integration temporarily disabled. User management is active.' });
 });
 
-// Request Repair (with escrow)
 app.post('/api/repair-request', async (req, res) => {
-  const { serialNumber, contractor, amountEth } = req.body;
-  if (!serialNumber || !contractor || !amountEth) {
-    return res.status(400).json({ error: 'serialNumber, contractor, and amountEth required' });
-  }
-  try {
-    const tx = await contract.requestRepair(
-      serialNumber,
-      contractor,
-      { value: ethers.parseEther(amountEth) }
-    );
-    await tx.wait();
-    res.json({ success: true, txHash: tx.hash });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  res.json({ message: 'ValveChain integration temporarily disabled. User management is active.' });
 });
 
-// Log Repair
 app.post('/api/repair', async (req, res) => {
-  const { serialNumber, preTestHash, repairHash, postTestHash } = req.body;
-  if (!serialNumber || !preTestHash || !repairHash || !postTestHash) {
-    return res.status(400).json({ error: 'serialNumber, preTestHash, repairHash, and postTestHash required' });
-  }
-  try {
-    const tx = await contract.logRepair(serialNumber, preTestHash, repairHash, postTestHash);
-    await tx.wait();
-    res.json({ success: true, txHash: tx.hash });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  res.json({ message: 'ValveChain integration temporarily disabled. User management is active.' });
 });
-
-// Example: Add more endpoints for audit, confirm, etc. as needed
 
 // Start server
-app.listen(PORT || 3000, () => {
-  console.log(`ValveChain Sidecar API running on port ${PORT || 3000}`);
+app.listen(PORT, () => {
+  console.log(`ValveChain Sidecar API running on port ${PORT}`);
+  console.log('User management endpoints available:');
+  console.log('  POST /api/auth/register');
+  console.log('  POST /api/auth/login');
+  console.log('  GET /api/auth/profile');
+  console.log('  PUT /api/auth/profile');
+  console.log('  PUT /api/auth/change-password');
+  console.log('  GET /api/auth/users (admin only)');
+  console.log('  GET /api/audit_logs (admin only)');
 });
