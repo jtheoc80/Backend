@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import { ethers } from 'ethers';
-import contractABI from './abi/ValveChainABI.json' assert { type: 'json' };
+import contractABI from './abi/ValveChainABI.json' with { type: 'json' };
 
 dotenv.config();
 
