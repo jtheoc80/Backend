@@ -1,0 +1,47 @@
+services:
+  # Node.js ValveChain Sidecar API Service
+  valvechain-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: valvechain-api
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      # Set your actual blockchain connection details
+      - PRIVATE_KEY=${PRIVATE_KEY:-your_private_key_here}
+      - RPC_URL=${RPC_URL:-https://sepolia.infura.io/v3/your-key}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS:-0xYourValveChainContractAddress}
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # Python Vendor Registration Service
+  vendor-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: vendor-service
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount uploads directory to persist files
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  uploads:
+    driver: local
