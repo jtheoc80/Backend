@@ -163,4 +163,5 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
+  }
+]
