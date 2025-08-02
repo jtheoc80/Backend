@@ -1,19 +1,15 @@
-import dotenv from 'dotenv';
+import config from './config.js';
 import express from 'express';
 import { ethers } from 'ethers';
-import contractABI from './abi/ValveChainABI.json' assert { type: 'json' };
-
-dotenv.config();
+import contractABI from './valvechainabi.json' with { type: 'json' };
 
 const app = express();
 app.use(express.json());
 
-const { PRIVATE_KEY, RPC_URL, CONTRACT_ADDRESS, PORT } = process.env;
-
-// Setup ethers provider/wallet
-const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, wallet);
+// Setup ethers provider/wallet using centralized config
+const provider = new ethers.JsonRpcProvider(config.blockchain.rpcUrl);
+const wallet = new ethers.Wallet(config.blockchain.privateKey, provider);
+const contract = new ethers.Contract(config.blockchain.contractAddress, contractABI, wallet);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -102,6 +98,6 @@ app.post('/api/repair', async (req, res) => {
 // Example: Add more endpoints for audit, confirm, etc. as needed
 
 // Start server
-app.listen(PORT || 3000, () => {
-  console.log(`ValveChain Sidecar API running on port ${PORT || 3000}`);
+app.listen(config.server.port, () => {
+  console.log(`ValveChain Sidecar API running on port ${config.server.port}`);
 });
