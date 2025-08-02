@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+"import jwt from 'jsonwebtoken';
 import UserModel from './userModel.js';
 
 /**
@@ -148,4 +148,4 @@ const authMiddleware = {
   }
 };
 
-export default authMiddleware;
+export default authMiddleware;" 

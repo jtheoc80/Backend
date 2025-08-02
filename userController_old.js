@@ -1,4 +1,4 @@
-import UserModel from './userModel.js';
+"import UserModel from './userModel.js';
 import logActivity from './logActivity.js';
 import { sendEmail } from './emailUtils.js';
 import jwt from 'jsonwebtoken';
@@ -232,4 +232,4 @@ const userController = {
   }
 };
 
-export default userController;
+export default userController;" 

@@ -2,18 +2,44 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { ethers } from 'ethers';
 import contractABI from './abi/ValveChainABI.json' assert { type: 'json' };
+import userRoutes from './userRoutes.js';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
+// User authentication routes
+app.use('/api/auth', userRoutes);
+
 const { PRIVATE_KEY, RPC_URL, CONTRACT_ADDRESS, PORT } = process.env;
 
-// Setup ethers provider/wallet
-const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, wallet);
+// Setup ethers provider/wallet (with error handling)
+let provider, wallet, contract;
+
+async function initializeBlockchain() {
+  try {
+    if (RPC_URL && RPC_URL !== 'https://sepolia.infura.io/v3/your-key') {
+      provider = new ethers.JsonRpcProvider(RPC_URL);
+      wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+      contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, wallet);
+      // Test the connection
+      await provider.getNetwork();
+      console.log('Blockchain connection initialized');
+    } else {
+      console.log('Blockchain service disabled - using placeholder RPC URL');
+    }
+  } catch (error) {
+    console.warn('Blockchain connection failed:', error.message);
+    console.log('Continuing without blockchain functionality...');
+    provider = null;
+    wallet = null;
+    contract = null;
+  }
+}
+
+// Initialize blockchain connection asynchronously
+initializeBlockchain();
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -22,6 +48,10 @@ app.get('/api/health', (req, res) => {
 
 // Register Valve (native support)
 app.post('/api/register-valve', async (req, res) => {
+  if (!contract) {
+    return res.status(503).json({ error: 'Blockchain service unavailable' });
+  }
+  
   const { serialNumber, details } = req.body;
   if (!serialNumber || !details) {
     return res.status(400).json({ error: 'serialNumber and details required' });
@@ -37,6 +67,10 @@ app.post('/api/register-valve', async (req, res) => {
 
 // Transfer Valve (native support)
 app.post('/api/transfer-valve', async (req, res) => {
+  if (!contract) {
+    return res.status(503).json({ error: 'Blockchain service unavailable' });
+  }
+  
   const { serialNumber, to } = req.body;
   if (!serialNumber || !to) {
     return res.status(400).json({ error: 'serialNumber and to required' });
@@ -52,6 +86,10 @@ app.post('/api/transfer-valve', async (req, res) => {
 
 // Log Maintenance Event
 app.post('/api/maintenance', async (req, res) => {
+  if (!contract) {
+    return res.status(503).json({ error: 'Blockchain service unavailable' });
+  }
+  
   const { serialNumber, description, reportHash } = req.body;
   if (!serialNumber || !description || !reportHash) {
     return res.status(400).json({ error: 'serialNumber, description, and reportHash required' });
@@ -67,6 +105,10 @@ app.post('/api/maintenance', async (req, res) => {
 
 // Request Repair (with escrow)
 app.post('/api/repair-request', async (req, res) => {
+  if (!contract) {
+    return res.status(503).json({ error: 'Blockchain service unavailable' });
+  }
+  
   const { serialNumber, contractor, amountEth } = req.body;
   if (!serialNumber || !contractor || !amountEth) {
     return res.status(400).json({ error: 'serialNumber, contractor, and amountEth required' });
@@ -86,6 +128,10 @@ app.post('/api/repair-request', async (req, res) => {
 
 // Log Repair
 app.post('/api/repair', async (req, res) => {
+  if (!contract) {
+    return res.status(503).json({ error: 'Blockchain service unavailable' });
+  }
+  
   const { serialNumber, preTestHash, repairHash, postTestHash } = req.body;
   if (!serialNumber || !preTestHash || !repairHash || !postTestHash) {
     return res.status(400).json({ error: 'serialNumber, preTestHash, repairHash, and postTestHash required' });

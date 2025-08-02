@@ -1,5 +1,5 @@
 
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 async function sendEmail(to, subject, text) {
     let transporter = nodemailer.createTransport({
@@ -20,4 +20,4 @@ async function sendEmail(to, subject, text) {
     console.log('Message sent: %s', info.messageId);
 }
 
-module.exports = { sendEmail };
+export { sendEmail };
