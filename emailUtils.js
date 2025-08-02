@@ -1,17 +1,17 @@
-
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
+import config from './config.js';
 
 async function sendEmail(to, subject, text) {
-    let transporter = nodemailer.createTransport({
+    let transporter = nodemailer.createTransporter({
         service: 'Gmail', // or another service like 'Yahoo', 'Outlook'
         auth: {
-            user: process.env.EMAIL_USER, // your email
-            pass: process.env.EMAIL_PASS, // your email password
+            user: config.email.user, // your email
+            pass: config.email.pass, // your email password
         },
     });
 
     let info = await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: config.email.user,
         to: to,
         subject: subject,
         text: text,
@@ -20,4 +20,4 @@ async function sendEmail(to, subject, text) {
     console.log('Message sent: %s', info.messageId);
 }
 
-module.exports = { sendEmail };
+export { sendEmail };
