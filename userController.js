@@ -1,1 +1,501 @@
-"{}" 
+const User = require('./userModel');
+const { generateToken } = require('./authMiddleware');
+const { sendEmail } = require('./emailUtils');
+const logActivity = require('./logActivity');
+const { db } = require('./database');
+const crypto = require('crypto');
+
+// Register new user
+const register = async (req, res) => {
+    try {
+        const { username, email, password, role } = req.body;
+
+        // Validate input
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                error: 'Username, email, and password are required.'
+            });
+        }
+
+        // Check if user already exists
+        const existingUserByEmail = await User.findByEmail(email);
+        if (existingUserByEmail) {
+            return res.status(409).json({
+                error: 'User with this email already exists.'
+            });
+        }
+
+        const existingUserByUsername = await User.findByUsername(username);
+        if (existingUserByUsername) {
+            return res.status(409).json({
+                error: 'Username already taken.'
+            });
+        }
+
+        // Create new user
+        const userData = { username, email, password };
+        if (role && ['admin', 'user'].includes(role)) {
+            userData.role = role;
+        }
+
+        const user = await User.create(userData);
+
+        // Generate token
+        const token = generateToken(user.id, user.role);
+
+        // Log activity
+        await logActivity(db, user.id, 'USER_REGISTER', { username, email }, 'success');
+
+        res.status(201).json({
+            message: 'User registered successfully.',
+            user: user.toJSON(),
+            token
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        
+        // Log failed activity
+        if (req.body.email) {
+            await logActivity(db, null, 'USER_REGISTER', { 
+                email: req.body.email, 
+                error: error.message 
+            }, 'failure');
+        }
+        
+        res.status(500).json({
+            error: 'Failed to register user.'
+        });
+    }
+};
+
+// Login user
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Validate input
+        if (!email || !password) {
+            return res.status(400).json({
+                error: 'Email and password are required.'
+            });
+        }
+
+        // Find user by email
+        const user = await User.findByEmail(email);
+        if (!user) {
+            await logActivity(db, null, 'USER_LOGIN', { email }, 'failure');
+            return res.status(401).json({
+                error: 'Invalid email or password.'
+            });
+        }
+
+        // Verify password
+        const isPasswordValid = await user.verifyPassword(password);
+        if (!isPasswordValid) {
+            await logActivity(db, user.id, 'USER_LOGIN', { email }, 'failure');
+            return res.status(401).json({
+                error: 'Invalid email or password.'
+            });
+        }
+
+        // Generate token
+        const token = generateToken(user.id, user.role);
+
+        // Log successful login
+        await logActivity(db, user.id, 'USER_LOGIN', { email }, 'success');
+
+        res.json({
+            message: 'Login successful.',
+            user: user.toJSON(),
+            token
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        // Log failed activity
+        if (req.body.email) {
+            await logActivity(db, null, 'USER_LOGIN', { 
+                email: req.body.email, 
+                error: error.message 
+            }, 'failure');
+        }
+        
+        res.status(500).json({
+            error: 'Failed to login.'
+        });
+    }
+};
+
+// Get current user profile
+const getProfile = async (req, res) => {
+    try {
+        res.json({
+            user: req.user.toJSON()
+        });
+    } catch (error) {
+        console.error('Get profile error:', error);
+        res.status(500).json({
+            error: 'Failed to get user profile.'
+        });
+    }
+};
+
+// Update user profile
+const updateProfile = async (req, res) => {
+    try {
+        const { username, email } = req.body;
+        const updateData = {};
+
+        if (username) updateData.username = username;
+        if (email) updateData.email = email;
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                error: 'No valid fields to update.'
+            });
+        }
+
+        // Check for existing username/email if updating
+        if (username && username !== req.user.username) {
+            const existingUser = await User.findByUsername(username);
+            if (existingUser && existingUser.id !== req.user.id) {
+                return res.status(409).json({
+                    error: 'Username already taken.'
+                });
+            }
+        }
+
+        if (email && email !== req.user.email) {
+            const existingUser = await User.findByEmail(email);
+            if (existingUser && existingUser.id !== req.user.id) {
+                return res.status(409).json({
+                    error: 'Email already in use.'
+                });
+            }
+        }
+
+        await req.user.update(updateData);
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_UPDATE_PROFILE', updateData, 'success');
+
+        res.json({
+            message: 'Profile updated successfully.',
+            user: req.user.toJSON()
+        });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_UPDATE_PROFILE', { 
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to update profile.'
+        });
+    }
+};
+
+// Change password
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                error: 'Current password and new password are required.'
+            });
+        }
+
+        // Verify current password
+        const isCurrentPasswordValid = await req.user.verifyPassword(currentPassword);
+        if (!isCurrentPasswordValid) {
+            await logActivity(db, req.user.id, 'USER_CHANGE_PASSWORD', {}, 'failure');
+            return res.status(401).json({
+                error: 'Current password is incorrect.'
+            });
+        }
+
+        // Update password
+        await req.user.updatePassword(newPassword);
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_CHANGE_PASSWORD', {}, 'success');
+
+        res.json({
+            message: 'Password changed successfully.'
+        });
+    } catch (error) {
+        console.error('Change password error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_CHANGE_PASSWORD', { 
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to change password.'
+        });
+    }
+};
+
+// Get all users (admin only)
+const getAllUsers = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const users = await User.findAll(page, limit);
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_LIST_ALL', { page, limit }, 'success');
+
+        res.json({
+            users: users.map(user => user.toJSON()),
+            page,
+            limit
+        });
+    } catch (error) {
+        console.error('Get all users error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_LIST_ALL', { 
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to get users.'
+        });
+    }
+};
+
+// Get user by ID (admin only or own profile)
+const getUserById = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                error: 'User not found.'
+            });
+        }
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_GET_BY_ID', { targetUserId: userId }, 'success');
+
+        res.json({
+            user: user.toJSON()
+        });
+    } catch (error) {
+        console.error('Get user by ID error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_GET_BY_ID', { 
+            targetUserId: req.params.id,
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to get user.'
+        });
+    }
+};
+
+// Update user by ID (admin only)
+const updateUserById = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const { username, email, role, is_verified } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                error: 'User not found.'
+            });
+        }
+
+        const updateData = {};
+        if (username) updateData.username = username;
+        if (email) updateData.email = email;
+        if (role && ['admin', 'user'].includes(role)) updateData.role = role;
+        if (typeof is_verified === 'boolean') updateData.is_verified = is_verified ? 1 : 0;
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                error: 'No valid fields to update.'
+            });
+        }
+
+        await user.update(updateData);
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_UPDATE_BY_ADMIN', { 
+            targetUserId: userId, 
+            updateData 
+        }, 'success');
+
+        res.json({
+            message: 'User updated successfully.',
+            user: user.toJSON()
+        });
+    } catch (error) {
+        console.error('Update user by ID error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_UPDATE_BY_ADMIN', { 
+            targetUserId: req.params.id,
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to update user.'
+        });
+    }
+};
+
+// Delete user by ID (admin only)
+const deleteUserById = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+
+        // Prevent admin from deleting themselves
+        if (userId === req.user.id) {
+            return res.status(400).json({
+                error: 'Cannot delete your own account.'
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                error: 'User not found.'
+            });
+        }
+
+        await user.delete();
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_DELETE_BY_ADMIN', { 
+            targetUserId: userId,
+            deletedUsername: user.username 
+        }, 'success');
+
+        res.json({
+            message: 'User deleted successfully.'
+        });
+    } catch (error) {
+        console.error('Delete user by ID error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_DELETE_BY_ADMIN', { 
+            targetUserId: req.params.id,
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to delete user.'
+        });
+    }
+};
+
+// Request password reset
+const requestPasswordReset = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                error: 'Email is required.'
+            });
+        }
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            // Don't reveal if user exists for security
+            return res.json({
+                message: 'If the email exists, a password reset link has been sent.'
+            });
+        }
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        await user.setResetToken(resetToken);
+
+        // Send reset email (in production, this should be properly configured)
+        try {
+            await sendEmail(
+                email,
+                'Password Reset Request',
+                `Click here to reset your password: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`
+            );
+        } catch (emailError) {
+            console.error('Failed to send reset email:', emailError);
+            // Continue anyway - we don't want to reveal if the email exists
+        }
+
+        // Log activity
+        await logActivity(db, user.id, 'USER_PASSWORD_RESET_REQUEST', { email }, 'success');
+
+        res.json({
+            message: 'If the email exists, a password reset link has been sent.'
+        });
+    } catch (error) {
+        console.error('Password reset request error:', error);
+        res.status(500).json({
+            error: 'Failed to process password reset request.'
+        });
+    }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                error: 'Token and new password are required.'
+            });
+        }
+
+        const user = await User.verifyResetToken(token);
+        if (!user) {
+            return res.status(400).json({
+                error: 'Invalid or expired reset token.'
+            });
+        }
+
+        // Update password and clear reset token
+        await user.updatePassword(newPassword);
+        await user.clearResetToken();
+
+        // Log activity
+        await logActivity(db, user.id, 'USER_PASSWORD_RESET', {}, 'success');
+
+        res.json({
+            message: 'Password reset successfully.'
+        });
+    } catch (error) {
+        console.error('Password reset error:', error);
+        res.status(500).json({
+            error: 'Failed to reset password.'
+        });
+    }
+};
+
+module.exports = {
+    register,
+    login,
+    getProfile,
+    updateProfile,
+    changePassword,
+    getAllUsers,
+    getUserById,
+    updateUserById,
+    deleteUserById,
+    requestPasswordReset,
+    resetPassword
+};
