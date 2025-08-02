@@ -1,166 +1,55 @@
 [
   {
-    "inputs": [],
+    "inputs": [
+      {"internalType": "string", "name": "serialNumber", "type": "string"},
+      {"internalType": "string", "name": "details", "type": "string"}
+    ],
+    "name": "registerValve",
+    "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "oldAdmin",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newAdmin",
-        "type": "address"
-      }
-    ],
-    "name": "AdminChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "plant",
-        "type": "address"
-      }
-    ],
-    "name": "PlantAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "plant",
-        "type": "address"
-      }
-    ],
-    "name": "PlantRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "removedBy",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "vendor",
-        "type": "address"
-      }
-    ],
-    "name": "RepairVendorRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "addedBy",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "vendor",
-        "type": "address"
-      }
-    ],
-    "name": "RepairVendorAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "distributor",
-        "type": "address"
-      }
-    ],
-    "name": "DistributorAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "distributor",
-        "type": "address"
-      }
-    ],
-    "name": "DistributorRemoved",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "admin",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
+      {"internalType": "string", "name": "serialNumber", "type": "string"},
+      {"internalType": "address", "name": "to", "type": "address"}
     ],
-    "name": "isDistributor",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "transferValve",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
+      {"internalType": "string", "name": "serialNumber", "type": "string"},
+      {"internalType": "string", "name": "description", "type": "string"},
+      {"internalType": "string", "name": "reportHash", "type": "string"}
     ],
-    "name": "isPlant",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "logMaintenance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
+  {
+    "inputs": [
+      {"internalType": "string", "name": "serialNumber", "type": "string"},
+      {"internalType": "address", "name": "contractor", "type": "address"}
+    ],
+    "name": "requestRepair",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "string", "name": "serialNumber", "type": "string"},
+      {"internalType": "string", "name": "preTestHash", "type": "string"},
+      {"internalType": "string", "name": "repairHash", "type": "string"},
+      {"internalType": "string", "name": "postTestHash", "type": "string"}
+    ],
+    "name": "logRepair",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
