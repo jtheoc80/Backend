@@ -1,5 +1,10 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 web3
+pydantic[email]
+python-multipart
+pytest
+pytest-asyncio
+httpx
 
