@@ -1,6 +1,15 @@
 const request = require('supertest');
 const express = require('express');
 
+// Create a shared mock contract that we can control from tests
+const mockContract = {
+  registerValve: jest.fn(),
+  logMaintenance: jest.fn(),
+  transferValve: jest.fn(),
+  requestRepair: jest.fn(),
+  logRepair: jest.fn()
+};
+
 // Mock fs module to avoid reading actual files during testing
 jest.mock('fs', () => ({
   readFileSync: jest.fn().mockReturnValue('[]')
@@ -11,13 +20,7 @@ jest.mock('ethers', () => ({
   ethers: {
     JsonRpcProvider: jest.fn().mockImplementation(() => ({})),
     Wallet: jest.fn().mockImplementation(() => ({})),
-    Contract: jest.fn().mockImplementation(() => ({
-      registerValve: jest.fn(),
-      logMaintenance: jest.fn(),
-      transferValve: jest.fn(),
-      requestRepair: jest.fn(),
-      logRepair: jest.fn()
-    })),
+    Contract: jest.fn().mockImplementation(() => mockContract),
     parseEther: jest.fn().mockImplementation((amount) => amount)
   }
 }));
@@ -35,24 +38,22 @@ process.env.PORT = '3000';
 
 describe('ValveChain API Endpoints', () => {
   let app;
-  let mockContract;
 
   beforeEach(() => {
-    // Clear all mocks
+    // Clear all mocks and reset to default behavior
     jest.clearAllMocks();
     
-    // Create a mock contract instance that we can control
-    mockContract = {
-      registerValve: jest.fn(),
-      logMaintenance: jest.fn(),
-      transferValve: jest.fn(),
-      requestRepair: jest.fn(),
-      logRepair: jest.fn()
+    // Set up default mock behavior for all contract methods
+    const defaultMockTx = {
+      hash: '0xdefault123',
+      wait: jest.fn().mockResolvedValue({})
     };
-
-    // Override the ethers.Contract constructor to return our mock
-    const { ethers } = require('ethers');
-    ethers.Contract.mockReturnValue(mockContract);
+    
+    mockContract.registerValve.mockResolvedValue(defaultMockTx);
+    mockContract.logMaintenance.mockResolvedValue(defaultMockTx);
+    mockContract.transferValve.mockResolvedValue(defaultMockTx);
+    mockContract.requestRepair.mockResolvedValue(defaultMockTx);
+    mockContract.logRepair.mockResolvedValue(defaultMockTx);
     
     // Import app after mocking (to ensure mocks are applied)
     delete require.cache[require.resolve('../index.js')];
@@ -77,6 +78,8 @@ describe('ValveChain API Endpoints', () => {
         hash: '0xabcdef123456',
         wait: jest.fn().mockResolvedValue({})
       };
+      
+      // Override the mock implementation for this specific test
       mockContract.registerValve.mockResolvedValue(mockTx);
 
       const valveData = {
@@ -141,6 +144,7 @@ describe('ValveChain API Endpoints', () => {
     });
 
     it('should handle blockchain errors gracefully', async () => {
+      // Override the mock to reject with an error
       mockContract.registerValve.mockRejectedValue(new Error('Transaction failed'));
 
       const valveData = {
@@ -165,6 +169,8 @@ describe('ValveChain API Endpoints', () => {
         hash: '0xmaintenance123',
         wait: jest.fn().mockResolvedValue({})
       };
+      
+      // Override the mock implementation for this specific test
       mockContract.logMaintenance.mockResolvedValue(mockTx);
 
       const maintenanceData = {
@@ -253,6 +259,7 @@ describe('ValveChain API Endpoints', () => {
     });
 
     it('should handle blockchain errors gracefully', async () => {
+      // Override the mock to reject with an error
       mockContract.logMaintenance.mockRejectedValue(new Error('Smart contract error'));
 
       const maintenanceData = {

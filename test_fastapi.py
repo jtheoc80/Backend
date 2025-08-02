@@ -17,10 +17,8 @@ class TestVendorRegistration:
 
     def setup_method(self):
         """Setup before each test method"""
-        # Clean up any test files
-        if os.path.exists("uploads"):
-            import shutil
-            shutil.rmtree("uploads")
+        # Create uploads directory for testing
+        os.makedirs("uploads", exist_ok=True)
 
     def test_register_vendor_valid_input(self):
         """Test vendor registration with valid input"""
