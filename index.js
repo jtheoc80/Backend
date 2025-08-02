@@ -1,7 +1,11 @@
-import dotenv from 'dotenv';
-import express from 'express';
-import { ethers } from 'ethers';
-import contractABI from './abi/ValveChainABI.json' assert { type: 'json' };
+const dotenv = require('dotenv');
+const express = require('express');
+const { ethers } = require('ethers');
+const fs = require('fs');
+const path = require('path');
+
+// Read the contract ABI
+const contractABI = JSON.parse(fs.readFileSync(path.join(__dirname, 'abi/ValveChainABI.json'), 'utf8'));
 
 dotenv.config();
 
@@ -102,6 +106,10 @@ app.post('/api/repair', async (req, res) => {
 // Example: Add more endpoints for audit, confirm, etc. as needed
 
 // Start server
-app.listen(PORT || 3000, () => {
-  console.log(`ValveChain Sidecar API running on port ${PORT || 3000}`);
-});
+if (require.main === module) {
+  app.listen(PORT || 3000, () => {
+    console.log(`ValveChain Sidecar API running on port ${PORT || 3000}`);
+  });
+}
+
+module.exports = app;

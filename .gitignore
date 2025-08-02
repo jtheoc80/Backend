@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+*.log
+.env
+uploads/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+package_backup.json
