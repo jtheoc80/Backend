@@ -2,4 +2,9 @@ fastapi
 uvicorn
 python-dotenv
 web3
+pytest
+httpx
+pytest-asyncio
+python-multipart
+email-validator
 
