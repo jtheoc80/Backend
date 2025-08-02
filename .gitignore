@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.env
+.DS_Store
+*.tmp
+*.temp
+*.clean.js
+*.extracted
+*_clean.js
