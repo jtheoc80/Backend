@@ -93,10 +93,88 @@ const initDatabase = async () => {
             FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
         )`);
 
+        // Distributors table
+        await run(`CREATE TABLE IF NOT EXISTS distributors (
+            id VARCHAR(50) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            wallet_address VARCHAR(42) UNIQUE,
+            contact_email VARCHAR(255),
+            contact_phone VARCHAR(50),
+            address TEXT,
+            blockchain_registration_hash VARCHAR(66),
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Territories table for geographical scoping
+        await run(`CREATE TABLE IF NOT EXISTS territories (
+            id VARCHAR(50) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(20) NOT NULL CHECK (type IN ('global', 'region', 'territory')),
+            parent_id VARCHAR(50),
+            description TEXT,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parent_id) REFERENCES territories(id)
+        )`);
+
+        // Manufacturer-Distributor relationships table
+        await run(`CREATE TABLE IF NOT EXISTS manufacturer_distributor_relationships (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            manufacturer_id VARCHAR(50) NOT NULL,
+            distributor_id VARCHAR(50) NOT NULL,
+            territory_id VARCHAR(50) NOT NULL,
+            permissions TEXT,
+            contract_address VARCHAR(42),
+            blockchain_assignment_hash VARCHAR(66),
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id),
+            FOREIGN KEY (distributor_id) REFERENCES distributors(id),
+            FOREIGN KEY (territory_id) REFERENCES territories(id),
+            UNIQUE(manufacturer_id, distributor_id, territory_id)
+        )`);
+
+        // Valve ownership transfers table
+        await run(`CREATE TABLE IF NOT EXISTS valve_ownership_transfers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            valve_id INTEGER NOT NULL,
+            from_owner_id VARCHAR(50) NOT NULL,
+            from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor')),
+            to_owner_id VARCHAR(50) NOT NULL,
+            to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor')),
+            transfer_type VARCHAR(20) NOT NULL CHECK (transfer_type IN ('initial_assignment', 'transfer', 'revoke')),
+            blockchain_transaction_hash VARCHAR(66),
+            reason TEXT,
+            is_completed BOOLEAN DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (valve_id) REFERENCES valves(id)
+        )`);
+
+        // Add columns to valves table for ownership tracking
+        await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
+        await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
+
         // Insert sample manufacturer data if not exists
         await run(`INSERT OR IGNORE INTO manufacturers (id, name, wallet_address, permissions) VALUES 
-            ('mfg001', 'Emerson Process Management', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8b', 'tokenize_valves,read_inventory'),
-            ('mfg002', 'Kitz Corporation', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8c', 'tokenize_valves,read_inventory')`);
+            ('mfg001', 'Emerson Process Management', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8b', 'tokenize_valves,read_inventory,manage_distributors'),
+            ('mfg002', 'Kitz Corporation', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8c', 'tokenize_valves,read_inventory,manage_distributors')`);
+
+        // Insert sample territory data if not exists
+        await run(`INSERT OR IGNORE INTO territories (id, name, type, description) VALUES 
+            ('global', 'Global', 'global', 'Worldwide distribution rights'),
+            ('na', 'North America', 'region', 'United States and Canada'),
+            ('eu', 'Europe', 'region', 'European Union and surrounding countries'),
+            ('asia', 'Asia Pacific', 'region', 'Asia Pacific region'),
+            ('us-east', 'US East Coast', 'territory', 'Eastern United States'),
+            ('us-west', 'US West Coast', 'territory', 'Western United States')`);
+
+        // Insert sample distributor data if not exists
+        await run(`INSERT OR IGNORE INTO distributors (id, name, wallet_address, contact_email) VALUES 
+            ('dist001', 'Industrial Valve Solutions Inc', '0x123d35Cc6436C0532925a3b8D0000a5492d95a1', 'sales@ivs-inc.com'),
+            ('dist002', 'Global Valve Distribution', '0x456d35Cc6436C0532925a3b8D0000a5492d95a2', 'info@gvd.com')`);
 
         console.log('Database tables initialized successfully');
     } catch (error) {

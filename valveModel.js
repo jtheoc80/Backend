@@ -19,6 +19,8 @@ class Valve {
         this.warranty_months = data.warranty_months;
         this.certifications = data.certifications ? data.certifications.split(',').map(c => c.trim()).filter(Boolean) : [];
         this.transaction_hash = data.transaction_hash;
+        this.current_owner_id = data.current_owner_id || data.manufacturer_id;
+        this.current_owner_type = data.current_owner_type || 'manufacturer';
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
     }
@@ -50,14 +52,14 @@ class Valve {
             token_id, valve_id, serial_number, type, manufacturer_id, model,
             diameter, pressure, temperature, material, connection_type,
             flow_coefficient, manufacture_date, warranty_months, certifications,
-            transaction_hash
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            transaction_hash, current_owner_id, current_owner_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const result = await db.run(sql, [
             token_id, valve_id, serial_number, type, manufacturer_id, model,
             diameter, pressure, temperature, material, connection_type,
             flow_coefficient, manufacture_date, warranty_months, certificationsStr,
-            transaction_hash
+            transaction_hash, manufacturer_id, 'manufacturer'
         ]);
 
         return await Valve.findById(result.lastID);
@@ -97,6 +99,81 @@ class Valve {
         }
         
         return new Valve(rows[0]);
+    }
+
+    // Get valves by current owner
+    static async findByOwner(ownerId, ownerType, page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        const sql = `SELECT * FROM valves WHERE current_owner_id = ? AND current_owner_type = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+        const rows = await db.query(sql, [ownerId, ownerType, limit, offset]);
+        
+        return rows.map(row => new Valve(row));
+    }
+
+    // Transfer valve ownership
+    async transferOwnership(toOwnerId, toOwnerType, transferType = 'transfer', reason = null) {
+        const { db: database } = require('./database');
+        
+        // Start transaction
+        await database.run('BEGIN TRANSACTION');
+        
+        try {
+            // Record the transfer
+            const transferSql = `INSERT INTO valve_ownership_transfers (
+                valve_id, from_owner_id, from_owner_type, to_owner_id, to_owner_type,
+                transfer_type, blockchain_transaction_hash, reason, is_completed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`;
+            
+            const transactionHash = Valve.generateTransactionHash();
+            
+            await database.run(transferSql, [
+                this.id, this.current_owner_id, this.current_owner_type,
+                toOwnerId, toOwnerType, transferType, transactionHash, reason
+            ]);
+            
+            // Update valve ownership
+            const updateSql = `UPDATE valves 
+                              SET current_owner_id = ?, current_owner_type = ?, updated_at = CURRENT_TIMESTAMP 
+                              WHERE id = ?`;
+            
+            await database.run(updateSql, [toOwnerId, toOwnerType, this.id]);
+            
+            // Commit transaction
+            await database.run('COMMIT');
+            
+            return {
+                success: true,
+                transactionHash,
+                previousOwner: { id: this.current_owner_id, type: this.current_owner_type },
+                newOwner: { id: toOwnerId, type: toOwnerType }
+            };
+            
+        } catch (error) {
+            // Rollback transaction
+            await database.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    // Get ownership transfer history
+    async getOwnershipHistory() {
+        const sql = `SELECT * FROM valve_ownership_transfers 
+                     WHERE valve_id = ? 
+                     ORDER BY created_at DESC`;
+        
+        const rows = await db.query(sql, [this.id]);
+        return rows;
+    }
+
+    // Check if valve can be transferred to specific owner
+    async canBeTransferredTo(ownerId, ownerType) {
+        // Basic validation - valve should not already be owned by the target
+        if (this.current_owner_id === ownerId && this.current_owner_type === ownerType) {
+            return { canTransfer: false, reason: 'Valve is already owned by this entity' };
+        }
+        
+        // Additional business logic can be added here
+        return { canTransfer: true };
     }
 
     // Get valves by manufacturer
@@ -155,6 +232,10 @@ class Valve {
             manufactureDate: this.manufacture_date,
             warrantyMonths: this.warranty_months,
             transactionHash: this.transaction_hash,
+            currentOwner: {
+                id: this.current_owner_id,
+                type: this.current_owner_type
+            },
             created_at: this.created_at,
             updated_at: this.updated_at
         };
