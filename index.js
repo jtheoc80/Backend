@@ -2,15 +2,20 @@ const express = require('express');
 const userRoutes = require('./userRoutes');
 const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
+const distributorRoutes = require('./distributorRoutes');
+const blockchainService = require('./blockchainService');
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
+// Initialize blockchain service
+blockchainService.initialize();
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ValveChain Sidecar API with User Management and Manufacturer Tokenization running' });
+  res.json({ status: 'ValveChain Sidecar API with User Management, Manufacturer Tokenization, and Distributor Management running' });
 });
 
 // Add user management routes
@@ -19,6 +24,9 @@ app.use('/api', auditLogsRoute);
 
 // Add manufacturer and valve tokenization routes
 app.use('/api', manufacturerRoutes);
+
+// Add distributor management routes
+app.use('/api', distributorRoutes);
 
 // Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {
@@ -61,4 +69,18 @@ app.listen(PORT, () => {
   console.log('  POST /api/valves/tokenize');
   console.log('  GET /api/valves');
   console.log('  GET /api/valves/:tokenId');
+  console.log('');
+  console.log('Distributor management endpoints available:');
+  console.log('  POST /api/distributors/register');
+  console.log('  GET /api/distributors');
+  console.log('  GET /api/distributors/:id');
+  console.log('  PUT /api/distributors/:id');
+  console.log('  DELETE /api/distributors/:id');
+  console.log('  POST /api/distributor-relationships/assign');
+  console.log('  DELETE /api/distributor-relationships/:relationshipId/revoke');
+  console.log('  GET /api/manufacturers/:manufacturerId/distributors');
+  console.log('  POST /api/valves/transfer-ownership');
+  console.log('  GET /api/territories');
+  console.log('  GET /api/territories/type/:type');
+  console.log('  GET /api/territories/:id');
 });

@@ -1,7 +1,7 @@
-# User Management and Manufacturer Tokenization Implementation Summary
+# User Management, Manufacturer Tokenization, and Distributor Relationship Management Implementation Summary
 
 ## Overview
-Successfully implemented a complete user management system AND manufacturer tokenization system for the ValveChain Backend API, adding authentication, authorization, audit logging, and secure valve tokenization capabilities that seamlessly integrate with the frontend implementation.
+Successfully implemented a complete user management system, manufacturer tokenization system, AND comprehensive distributor relationship management system for the ValveChain Backend API, adding authentication, authorization, audit logging, secure valve tokenization capabilities, and blockchain-integrated distributor relationship management that seamlessly integrates with the frontend implementation.
 
 ## Files Implemented
 
@@ -83,9 +83,75 @@ Successfully implemented a complete user management system AND manufacturer toke
   - Comprehensive valve tokenization workflow
   - Manufacturer valve inventory endpoints
 
-### Database and Infrastructure
+### Distributor Relationship Management System
 
-### 9. database.js (Updated)
+### 9. distributorModel.js
+- **Purpose**: Distributor data model and operations
+- **Features**:
+  - Complete distributor CRUD operations
+  - Blockchain wallet address integration
+  - Manufacturer relationship tracking
+  - Contact information management
+  - Active/inactive status management
+
+### 10. territoryModel.js
+- **Purpose**: Territory data model for geographical scoping
+- **Features**:
+  - Hierarchical territory structure (global/region/territory)
+  - Parent-child territory relationships
+  - Territory type validation
+  - Territory hierarchy navigation
+
+### 11. manufacturerDistributorRelationshipModel.js
+- **Purpose**: Manufacturer-distributor relationship management
+- **Features**:
+  - Relationship CRUD operations with territory scoping
+  - Permission management for valve ownership transfer
+  - Blockchain integration for relationship recording
+  - Relationship activation/deactivation
+  - Multi-dimensional relationship queries
+
+### 12. distributorController.js
+- **Purpose**: HTTP request handlers for distributor management
+- **Features**:
+  - Distributor registration with blockchain integration
+  - Distributor rights assignment and revocation
+  - Valve ownership transfer between manufacturers and distributors
+  - Comprehensive validation and error handling
+  - Blockchain transaction recording
+
+### 13. territoryController.js
+- **Purpose**: HTTP request handlers for territory management
+- **Features**:
+  - Territory retrieval by type and ID
+  - Territory hierarchy navigation
+  - Territory-based filtering
+
+### 14. distributorRoutes.js
+- **Purpose**: Route definitions for distributor management
+- **Features**:
+  - RESTful API endpoints for distributors, territories, and relationships
+  - Rate limiting for security
+  - Comprehensive distributor management workflow
+
+### 15. blockchainService.js
+- **Purpose**: Blockchain integration service
+- **Features**:
+  - Smart contract integration for distributor registration
+  - Blockchain recording of distributor rights assignments
+  - Valve ownership transfer on blockchain
+  - Mock mode for development with realistic transaction simulation
+  - Transaction verification capabilities
+
+### Database and Infrastructure (Extended)
+
+### 16. database.js (Extended)
+- **Purpose**: Database connection and configuration
+- **Features**:
+  - Extended SQLite database with distributor management tables
+  - Foreign key relationships for data integrity
+  - Sample distributor and territory data initialization
+  - Valve ownership tracking extensions
 - **Purpose**: Database connection and configuration
 - **Features**:
   - SQLite database with async/await wrapper
@@ -130,6 +196,26 @@ Successfully implemented a complete user management system AND manufacturer toke
 - `GET /api/valves/:tokenId` - Get valve by token ID
 - `GET /api/manufacturers/:id/valves` - Get valves for a manufacturer
 
+### Distributor Relationship Management
+- `POST /api/distributors/register` - Register new distributor
+- `GET /api/distributors` - Get all distributors
+- `GET /api/distributors/:id` - Get distributor by ID
+- `PUT /api/distributors/:id` - Update distributor
+- `DELETE /api/distributors/:id` - Deactivate distributor
+
+### Distributor Rights Management
+- `POST /api/distributor-relationships/assign` - Assign distributor rights
+- `DELETE /api/distributor-relationships/:id/revoke` - Revoke distributor rights
+- `GET /api/manufacturers/:id/distributors` - Get manufacturer's distributors
+
+### Territory Management
+- `GET /api/territories` - Get all territories
+- `GET /api/territories/type/:type` - Get territories by type
+- `GET /api/territories/:id` - Get territory by ID
+
+### Valve Ownership Transfer
+- `POST /api/valves/transfer-ownership` - Transfer valve ownership
+
 ### Audit Logs
 - `GET /api/audit_logs` - View audit logs (admin only)
 
@@ -156,7 +242,12 @@ Successfully implemented a complete user management system AND manufacturer toke
 - Duplicate serial number prevention
 - Comprehensive error handling with security logging
 
-### Audit Logging
+### Distributor Management Security
+- **Blockchain Integration**: All distributor registrations recorded on-chain
+- **Relationship Validation**: Distributors must have active relationships for valve transfers
+- **Territory Scoping**: Rights assignment scoped by geographical territories
+- **Permission-based Access**: Manufacturer permissions required for distributor management
+- **Wallet Verification**: Distributor wallet addresses verified on blockchain
 - Comprehensive activity logging
 - Success/failure tracking
 - Metadata capture for security analysis
@@ -254,16 +345,48 @@ CREATE TABLE audit_logs (
 - **Token IDs**: Unique token ID generation with timestamp and random components
 - **Valve IDs**: Manufacturer-prefixed valve IDs for easy identification
 
+## Distributor Relationship Management Features
+
+### Comprehensive Distributor Management
+- **Distributor Registration**: Secure registration with blockchain wallet integration  
+- **Territory-based Scoping**: Global, regional, and territory-specific distributor rights
+- **Relationship Management**: Complete lifecycle management of manufacturer-distributor relationships
+- **Valve Ownership Transfer**: Seamless transfer of valve ownership between manufacturers and distributors
+- **Blockchain Integration**: All operations recorded on-chain for transparency and auditability
+
+### Distributor Rights Assignment Process
+1. **Manufacturer Authentication**: Verify manufacturer has distributor management permissions
+2. **Distributor Validation**: Ensure distributor is registered and active
+3. **Territory Validation**: Confirm territory exists and is valid for assignment
+4. **Blockchain Recording**: Record relationship assignment on smart contract
+5. **Database Storage**: Store relationship with permissions and contract details
+6. **Response**: Return assignment result with blockchain transaction details
+
+### Valve Ownership Transfer Process
+1. **Ownership Verification**: Confirm manufacturer owns the valve
+2. **Relationship Validation**: Ensure active relationship exists between manufacturer and distributor
+3. **Transfer Authorization**: Validate transfer permissions
+4. **Blockchain Transfer**: Execute ownership transfer on smart contract
+5. **Database Update**: Update valve ownership records and create transfer history
+6. **Response**: Return transfer result with complete ownership details
+
+### Territory Management
+- **Hierarchical Structure**: Support for global > region > territory hierarchy
+- **Pre-configured Territories**: Global, North America, Europe, Asia Pacific, US East/West
+- **Flexible Scoping**: Assign rights at any level of the hierarchy
+- **Territory Relationships**: Parent-child relationships for logical grouping
+
 ## Integration with Existing Application
 
-The manufacturer tokenization system has been seamlessly integrated into the existing ValveChain Sidecar API:
+The distributor relationship management system has been seamlessly integrated into the existing ValveChain Sidecar API:
 
-1. **Maintained Compatibility**: All existing user management endpoints remain functional
+1. **Maintained Compatibility**: All existing user management and manufacturer endpoints remain functional
 2. **CommonJS Consistency**: Used CommonJS modules to match existing codebase patterns
-3. **Express.js Integration**: Added manufacturer routes to existing Express application
-4. **Database Extension**: Extended existing SQLite database with new tables
-5. **Rate Limiting**: Applied consistent rate limiting across all endpoints
+3. **Express.js Integration**: Added distributor routes to existing Express application
+4. **Database Extension**: Extended existing SQLite database with new tables and relationships
+5. **Rate Limiting**: Applied consistent rate limiting across all new endpoints
 6. **Error Handling**: Unified error handling and response formatting
+7. **Blockchain Integration**: Mock blockchain service with realistic transaction simulation
 
 ## Testing Results
 
@@ -280,10 +403,55 @@ All functionality has been tested and verified:
 - ✅ **Duplicate serial number prevention**
 - ✅ **Permission-based access control**
 - ✅ **Complete frontend-backend API integration**
+- ✅ **Complete Distributor Relationship Management System**
+- ✅ **Distributor registration with blockchain integration**
+- ✅ **Territory-based rights assignment and revocation**
+- ✅ **Valve ownership transfer between manufacturers and distributors**
+- ✅ **Comprehensive validation and error handling**
+- ✅ **Smart contract integration with mock blockchain service**
+- ✅ **Territory management with hierarchical structure**
+- ✅ **Relationship lifecycle management**
 - ✅ Integration with main application
 - ✅ Existing endpoints remain functional
 
-## Manufacturer Tokenization API Examples
+## Distributor Management API Examples
+
+### Distributor Registration
+```bash
+curl -X POST http://localhost:3000/api/distributors/register \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Industrial Valve Solutions Inc",
+    "walletAddress": "0x123d35Cc6436C0532925a3b8D0000a5492d95a1",
+    "contactEmail": "sales@ivs-inc.com",
+    "contactPhone": "+1-555-0123",
+    "address": "123 Industrial Blvd, Manufacturing City, MC 12345"
+  }'
+```
+
+### Assign Distributor Rights
+```bash
+curl -X POST http://localhost:3000/api/distributor-relationships/assign \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "manufacturerId": "mfg001",
+    "distributorId": "dist001",
+    "territoryId": "na",
+    "permissions": ["receive_valve_ownership", "manage_valves"]
+  }'
+```
+
+### Transfer Valve Ownership
+```bash
+curl -X POST http://localhost:3000/api/valves/transfer-ownership \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "valveTokenId": "VLV1754343743637998",
+    "distributorId": "dist001",
+    "manufacturerId": "mfg001",
+    "reason": "Distribution agreement for North America"
+  }'
+```
 
 ### Manufacturer Validation
 ```bash
