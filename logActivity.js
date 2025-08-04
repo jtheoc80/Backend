@@ -13,16 +13,17 @@ const logActivity = async (db, userId, action, metadata, outcome) => {
     }
 };
 
+// Sensitive keys to be redacted from metadata
+const sensitiveKeys = [
+    'password', 'token', 'secret', 'private_key', 'auth_token',
+    'api_key', 'jwt', 'session_id', 'csrf_token', 'reset_token'
+];
+
 // Function to sanitize metadata and remove sensitive information
 const sanitizeMetadata = (metadata) => {
     if (!metadata || typeof metadata !== 'object') {
         return metadata;
     }
-    
-    const sensitiveKeys = [
-        'password', 'token', 'secret', 'private_key', 'auth_token',
-        'api_key', 'jwt', 'session_id', 'csrf_token', 'reset_token'
-    ];
     
     const sanitized = { ...metadata };
     
