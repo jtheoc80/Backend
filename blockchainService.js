@@ -3,7 +3,12 @@ const { ethers } = require('ethers');
 class BlockchainService {
     constructor() {
         // Mock blockchain configuration - replace with actual blockchain integration
-        this.contractABI = require('./valvechainabi.json');
+        this.contractABI = [];
+        try {
+            this.contractABI = require('./valvechainabi.json');
+        } catch (error) {
+            console.log('ABI file not found or invalid, using empty ABI for mock mode');
+        }
         this.contractAddress = process.env.CONTRACT_ADDRESS || '0x742d35Cc6436C0532925a3b8D0000a5492d95a8b';
         this.rpcUrl = process.env.RPC_URL || 'https://sepolia.infura.io/v3/your-project-id';
         this.privateKey = process.env.PRIVATE_KEY;

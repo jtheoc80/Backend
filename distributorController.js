@@ -441,7 +441,10 @@ const getManufacturerDistributors = async (req, res) => {
 
         res.json({
             success: true,
-            data: relationships.map(r => r.toJSONWithDetails()),
+            data: relationships.map(r => {
+                const relationship = r instanceof ManufacturerDistributorRelationship ? r : new ManufacturerDistributorRelationship(r);
+                return relationship.toJSONWithDetails();
+            }),
             message: `Retrieved ${relationships.length} distributor relationships`
         });
 

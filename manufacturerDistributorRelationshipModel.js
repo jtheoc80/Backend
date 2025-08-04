@@ -73,12 +73,13 @@ class ManufacturerDistributorRelationship {
                      ORDER BY mdr.created_at DESC`;
         
         const rows = await db.query(sql, [manufacturerId]);
-        return rows.map(row => ({
-            ...new ManufacturerDistributorRelationship(row),
-            distributor_name: row.distributor_name,
-            territory_name: row.territory_name,
-            territory_type: row.territory_type
-        }));
+        return rows.map(row => {
+            const relationship = new ManufacturerDistributorRelationship(row);
+            relationship.distributor_name = row.distributor_name;
+            relationship.territory_name = row.territory_name;
+            relationship.territory_type = row.territory_type;
+            return relationship;
+        });
     }
 
     // Get all relationships for a distributor
@@ -91,12 +92,13 @@ class ManufacturerDistributorRelationship {
                      ORDER BY mdr.created_at DESC`;
         
         const rows = await db.query(sql, [distributorId]);
-        return rows.map(row => ({
-            ...new ManufacturerDistributorRelationship(row),
-            manufacturer_name: row.manufacturer_name,
-            territory_name: row.territory_name,
-            territory_type: row.territory_type
-        }));
+        return rows.map(row => {
+            const relationship = new ManufacturerDistributorRelationship(row);
+            relationship.manufacturer_name = row.manufacturer_name;
+            relationship.territory_name = row.territory_name;
+            relationship.territory_type = row.territory_type;
+            return relationship;
+        });
     }
 
     // Get all relationships for a territory
@@ -109,11 +111,12 @@ class ManufacturerDistributorRelationship {
                      ORDER BY mdr.created_at DESC`;
         
         const rows = await db.query(sql, [territoryId]);
-        return rows.map(row => ({
-            ...new ManufacturerDistributorRelationship(row),
-            manufacturer_name: row.manufacturer_name,
-            distributor_name: row.distributor_name
-        }));
+        return rows.map(row => {
+            const relationship = new ManufacturerDistributorRelationship(row);
+            relationship.manufacturer_name = row.manufacturer_name;
+            relationship.distributor_name = row.distributor_name;
+            return relationship;
+        });
     }
 
     // Update relationship permissions
