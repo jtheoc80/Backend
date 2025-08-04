@@ -1,0 +1,316 @@
+/* Valve Table Component Styles */
+.valve-table-container {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.valve-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e1e5e9;
+}
+
+.valve-table-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.valve-table-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 250px;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.valve-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+}
+
+.valve-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: #fff;
+}
+
+.valve-table-header-cell {
+  background: #f8f9fa;
+  border-bottom: 2px solid #e1e5e9;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  position: relative;
+}
+
+.header-cell-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.sortable:hover {
+  color: #3498db;
+}
+
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 12px;
+  color: #3498db;
+}
+
+.column-filter {
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+  width: 100%;
+  max-width: 120px;
+}
+
+.column-filter:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.valve-table-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.valve-table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.valve-table-row:last-child {
+  border-bottom: none;
+}
+
+.valve-table td {
+  padding: 12px 8px;
+  vertical-align: middle;
+  border-right: 1px solid #e1e5e9;
+}
+
+.valve-table td:last-child {
+  border-right: none;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-active {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.status-maintenance {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-edit {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #2980b9;
+}
+
+.btn-delete {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #c0392b;
+}
+
+/* Loading and error states */
+.valve-table-loading,
+.valve-table-error {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #666;
+}
+
+.valve-table-error {
+  color: #e74c3c;
+  background-color: #fdf2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-style: italic;
+  background-color: #f8f9fa;
+}
+
+.valve-table-footer {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.results-count {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .valve-table-container {
+    padding: 15px;
+    margin: 10px 0;
+  }
+
+  .valve-table-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .valve-table {
+    font-size: 12px;
+  }
+
+  .valve-table td,
+  .valve-table-header-cell {
+    padding: 8px 4px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .valve-table-container {
+    background: #2c3e50;
+    color: #ecf0f1;
+  }
+
+  .valve-table-header-cell {
+    background: #34495e;
+    color: #ecf0f1;
+  }
+
+  .valve-table {
+    background: #2c3e50;
+    color: #ecf0f1;
+  }
+
+  .valve-table-row:hover {
+    background-color: #34495e;
+  }
+
+  .search-input,
+  .column-filter {
+    background: #34495e;
+    color: #ecf0f1;
+    border-color: #4a5f7a;
+  }
+
+  .no-results {
+    background-color: #34495e;
+    color: #bdc3c7;
+  }
+}
