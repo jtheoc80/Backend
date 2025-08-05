@@ -157,6 +157,27 @@ const initDatabase = async () => {
         await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
         await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
 
+        // Purchase Orders table
+        await run(`CREATE TABLE IF NOT EXISTS purchase_orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            po_number VARCHAR(100) UNIQUE NOT NULL,
+            manufacturer_id VARCHAR(50) NOT NULL,
+            distributor_id VARCHAR(50) NOT NULL,
+            total_amount DECIMAL(10,2) NOT NULL,
+            currency VARCHAR(3) DEFAULT 'USD',
+            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
+            items TEXT NOT NULL,
+            notes TEXT,
+            approved_by INTEGER,
+            approved_at DATETIME,
+            blockchain_transaction_hash VARCHAR(66),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id),
+            FOREIGN KEY (distributor_id) REFERENCES distributors(id),
+            FOREIGN KEY (approved_by) REFERENCES users(id)
+        )`);
+
         // Insert sample manufacturer data if not exists
         await run(`INSERT OR IGNORE INTO manufacturers (id, name, wallet_address, permissions) VALUES 
             ('mfg001', 'Emerson Process Management', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8b', 'tokenize_valves,read_inventory,manage_distributors'),

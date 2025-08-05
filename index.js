@@ -3,6 +3,7 @@ const userRoutes = require('./userRoutes');
 const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
 const distributorRoutes = require('./distributorRoutes');
+const poRoutes = require('./poRoutes');
 const blockchainService = require('./blockchainService');
 
 const app = express();
@@ -27,6 +28,9 @@ app.use('/api', manufacturerRoutes);
 
 // Add distributor management routes
 app.use('/api', distributorRoutes);
+
+// Add purchase order routes
+app.use('/api', poRoutes);
 
 // Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {
@@ -84,4 +88,13 @@ app.listen(PORT, () => {
   console.log('  GET /api/territories');
   console.log('  GET /api/territories/type/:type');
   console.log('  GET /api/territories/:id');
+  console.log('');
+  console.log('Purchase Order management endpoints available:');
+  console.log('  POST /api/pos');
+  console.log('  GET /api/pos');
+  console.log('  GET /api/pos/:id');
+  console.log('  GET /api/pos/number/:po_number');
+  console.log('  PUT /api/pos/:id');
+  console.log('  POST /api/pos/:id/approve');
+  console.log('  POST /api/pos/:id/reject');
 });
