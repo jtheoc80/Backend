@@ -106,7 +106,7 @@ const authMiddleware = {
     
     return jwt.sign(
       payload,
-      process.env.JWT_SECRET || 'your-secret-key',
+      JWT_SECRET,
       { ...defaultOptions, ...options }
     );
   },
