@@ -4,6 +4,7 @@ const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
 const distributorRoutes = require('./distributorRoutes');
 const poRoutes = require('./poRoutes');
+const valveReturnRoutes = require('./valveReturnRoutes');
 const blockchainService = require('./blockchainService');
 
 const app = express();
@@ -31,6 +32,9 @@ app.use('/api', distributorRoutes);
 
 // Add purchase order routes
 app.use('/api', poRoutes);
+
+// Add valve return routes
+app.use('/api', valveReturnRoutes);
 
 // Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {

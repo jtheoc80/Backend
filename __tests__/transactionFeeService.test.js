@@ -5,51 +5,51 @@ describe('TransactionFeeService', () => {
     describe('calculateFee', () => {
         
         describe('Role-based fee calculations', () => {
-            test('should calculate correct fee for general user (60 bps)', () => {
+            test('should calculate correct fee for general user (50 bps)', () => {
                 const result = transactionFeeService.calculateFee('user', 1.0);
                 
                 expect(result.success).toBe(true);
                 expect(result.role).toBe('user');
-                expect(result.feeBasisPoints).toBe(60);
-                expect(result.feeRate).toBe(0.006); // 60 * 0.0001
-                expect(result.feeAmount).toBe(0.006); // 1.0 * 0.006
-                expect(result.netAmount).toBe(0.994); // 1.0 - 0.006
-                expect(result.calculation.percentage).toBe('0.60%');
+                expect(result.feeBasisPoints).toBe(50);
+                expect(result.feeRate).toBe(0.005); // 50 * 0.0001
+                expect(result.feeAmount).toBe(0.005); // 1.0 * 0.005
+                expect(result.netAmount).toBe(0.995); // 1.0 - 0.005
+                expect(result.calculation.percentage).toBe('0.50%');
             });
 
-            test('should calculate correct fee for distributor (10 bps)', () => {
+            test('should calculate correct fee for distributor (50 bps)', () => {
                 const result = transactionFeeService.calculateFee('distributor', 1.0);
                 
                 expect(result.success).toBe(true);
                 expect(result.role).toBe('distributor');
-                expect(result.feeBasisPoints).toBe(10);
-                expect(result.feeRate).toBe(0.001); // 10 * 0.0001
-                expect(result.feeAmount).toBe(0.001); // 1.0 * 0.001
-                expect(result.netAmount).toBe(0.999); // 1.0 - 0.001
-                expect(result.calculation.percentage).toBe('0.10%');
+                expect(result.feeBasisPoints).toBe(50);
+                expect(result.feeRate).toBe(0.005); // 50 * 0.0001
+                expect(result.feeAmount).toBe(0.005); // 1.0 * 0.005
+                expect(result.netAmount).toBe(0.995); // 1.0 - 0.005
+                expect(result.calculation.percentage).toBe('0.50%');
             });
 
-            test('should calculate correct fee for repair vendor (10 bps)', () => {
+            test('should calculate correct fee for repair vendor (50 bps)', () => {
                 const result = transactionFeeService.calculateFee('repair_vendor', 1.0);
                 
                 expect(result.success).toBe(true);
                 expect(result.role).toBe('repair_vendor');
-                expect(result.feeBasisPoints).toBe(10);
-                expect(result.feeRate).toBe(0.001);
-                expect(result.feeAmount).toBe(0.001);
-                expect(result.netAmount).toBe(0.999);
+                expect(result.feeBasisPoints).toBe(50);
+                expect(result.feeRate).toBe(0.005);
+                expect(result.feeAmount).toBe(0.005);
+                expect(result.netAmount).toBe(0.995);
             });
 
-            test('should calculate correct fee for plant (40 bps)', () => {
+            test('should calculate correct fee for plant (50 bps)', () => {
                 const result = transactionFeeService.calculateFee('plant', 1.0);
                 
                 expect(result.success).toBe(true);
                 expect(result.role).toBe('plant');
-                expect(result.feeBasisPoints).toBe(40);
-                expect(result.feeRate).toBe(0.004); // 40 * 0.0001
-                expect(result.feeAmount).toBe(0.004); // 1.0 * 0.004
-                expect(result.netAmount).toBe(0.996); // 1.0 - 0.004
-                expect(result.calculation.percentage).toBe('0.40%');
+                expect(result.feeBasisPoints).toBe(50);
+                expect(result.feeRate).toBe(0.005); // 50 * 0.0001
+                expect(result.feeAmount).toBe(0.005); // 1.0 * 0.005
+                expect(result.netAmount).toBe(0.995); // 1.0 - 0.005
+                expect(result.calculation.percentage).toBe('0.50%');
             });
 
             test('should calculate zero fee for admin', () => {
@@ -68,10 +68,24 @@ describe('TransactionFeeService', () => {
                 
                 expect(result.success).toBe(true);
                 expect(result.role).toBe('unknown_role');
-                expect(result.feeBasisPoints).toBe(60); // default
-                expect(result.feeRate).toBe(0.006);
-                expect(result.feeAmount).toBe(0.006);
-                expect(result.netAmount).toBe(0.994);
+                expect(result.feeBasisPoints).toBe(50); // default (updated to 0.5%)
+                expect(result.feeRate).toBe(0.005);
+                expect(result.feeAmount).toBe(0.005);
+                expect(result.netAmount).toBe(0.995);
+            });
+        });
+
+        describe('Return fee calculations', () => {
+            test('should calculate fee including return fee', () => {
+                const result = transactionFeeService.calculateFee('distributor', 1.0, 0.5);
+                
+                expect(result.success).toBe(true);
+                expect(result.transactionAmount).toBe(1.0);
+                expect(result.returnFee).toBe(0.5);
+                expect(result.totalTransactionAmount).toBe(1.5);
+                expect(result.feeAmount).toBe(0.0075); // 1.5 * 0.005
+                expect(result.netAmount).toBe(1.4925); // 1.5 - 0.0075
+                expect(result.feeWalletAddress).toBeDefined();
             });
         });
 
@@ -81,9 +95,9 @@ describe('TransactionFeeService', () => {
                 const lowerCase = transactionFeeService.calculateFee('distributor', 1.0);
                 const mixedCase = transactionFeeService.calculateFee('Distributor', 1.0);
                 
-                expect(upperCase.feeBasisPoints).toBe(10);
-                expect(lowerCase.feeBasisPoints).toBe(10);
-                expect(mixedCase.feeBasisPoints).toBe(10);
+                expect(upperCase.feeBasisPoints).toBe(50);
+                expect(lowerCase.feeBasisPoints).toBe(50);
+                expect(mixedCase.feeBasisPoints).toBe(50);
                 
                 expect(upperCase.role).toBe('distributor');
                 expect(lowerCase.role).toBe('distributor');
@@ -95,9 +109,9 @@ describe('TransactionFeeService', () => {
                 const repairVendorAlias = transactionFeeService.calculateFee('repairvendor', 1.0);
                 const distAlias = transactionFeeService.calculateFee('dist', 1.0);
                 
-                expect(repairAlias.feeBasisPoints).toBe(10);
-                expect(repairVendorAlias.feeBasisPoints).toBe(10);
-                expect(distAlias.feeBasisPoints).toBe(10);
+                expect(repairAlias.feeBasisPoints).toBe(50);
+                expect(repairVendorAlias.feeBasisPoints).toBe(50);
+                expect(distAlias.feeBasisPoints).toBe(50);
             });
 
             test('should trim whitespace from roles', () => {

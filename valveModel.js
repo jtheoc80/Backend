@@ -21,6 +21,10 @@ class Valve {
         this.transaction_hash = data.transaction_hash;
         this.current_owner_id = data.current_owner_id || data.manufacturer_id;
         this.current_owner_type = data.current_owner_type || 'manufacturer';
+        this.is_burned = data.is_burned || 0;
+        this.burn_reason = data.burn_reason;
+        this.burned_at = data.burned_at;
+        this.burned_by = data.burned_by;
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
     }
@@ -165,8 +169,230 @@ class Valve {
         return rows;
     }
 
+    // Burn valve token (admin only)
+    async burnToken(burnedBy, reason) {
+        const { db: database } = require('./database');
+        
+        // Check if valve is already burned
+        if (this.is_burned) {
+            throw new Error('Valve token is already burned');
+        }
+        
+        try {
+            await database.run('BEGIN TRANSACTION');
+            
+            // Update valve as burned
+            const updateSql = `UPDATE valves 
+                              SET is_burned = 1, burn_reason = ?, burned_at = CURRENT_TIMESTAMP, burned_by = ?, updated_at = CURRENT_TIMESTAMP 
+                              WHERE id = ?`;
+            
+            await database.run(updateSql, [reason, burnedBy, this.id]);
+            
+            // Record the burn in ownership transfers for audit trail
+            const transferSql = `INSERT INTO valve_ownership_transfers (
+                valve_id, from_owner_id, from_owner_type, to_owner_id, to_owner_type,
+                transfer_type, reason, is_completed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`;
+            
+            await database.run(transferSql, [
+                this.id, this.current_owner_id, this.current_owner_type,
+                'BURNED', 'system', 'burn', reason
+            ]);
+            
+            await database.run('COMMIT');
+            
+            // Update instance properties
+            this.is_burned = 1;
+            this.burn_reason = reason;
+            this.burned_by = burnedBy;
+            this.burned_at = new Date().toISOString();
+            
+            return {
+                success: true,
+                message: 'Valve token burned successfully',
+                burnedAt: this.burned_at
+            };
+            
+        } catch (error) {
+            await database.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    // Restore ownership for resellable valves (admin only)
+    async restoreOwnership(newOwnerId, newOwnerType, restoredBy, reason) {
+        const { db: database } = require('./database');
+        
+        // Check if valve is burned
+        if (!this.is_burned) {
+            throw new Error('Cannot restore ownership: valve is not burned');
+        }
+        
+        try {
+            await database.run('BEGIN TRANSACTION');
+            
+            // Update valve ownership and unburn it
+            const updateSql = `UPDATE valves 
+                              SET current_owner_id = ?, current_owner_type = ?, 
+                                  is_burned = 0, burn_reason = NULL, burned_at = NULL, burned_by = NULL,
+                                  updated_at = CURRENT_TIMESTAMP 
+                              WHERE id = ?`;
+            
+            await database.run(updateSql, [newOwnerId, newOwnerType, this.id]);
+            
+            // Record the restoration in ownership transfers
+            const transferSql = `INSERT INTO valve_ownership_transfers (
+                valve_id, from_owner_id, from_owner_type, to_owner_id, to_owner_type,
+                transfer_type, reason, is_completed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`;
+            
+            await database.run(transferSql, [
+                this.id, 'BURNED', 'system',
+                newOwnerId, newOwnerType, 'restore', reason
+            ]);
+            
+            await database.run('COMMIT');
+            
+            // Update instance properties
+            this.current_owner_id = newOwnerId;
+            this.current_owner_type = newOwnerType;
+            this.is_burned = 0;
+            this.burn_reason = null;
+            this.burned_at = null;
+            this.burned_by = null;
+            
+            return {
+                success: true,
+                message: 'Valve ownership restored successfully',
+                newOwner: { id: newOwnerId, type: newOwnerType }
+            };
+            
+        } catch (error) {
+            await database.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    // Create return request
+    static async createReturnRequest(returnData) {
+        const { db } = require('./database');
+        
+        const {
+            valveId,
+            returnType,
+            returnedById,
+            returnedByType,
+            returnReason,
+            returnFee = 0
+        } = returnData;
+
+        // Validate return type
+        const validReturnTypes = ['damaged', 'not_operable', 'custom', 'not_resellable', 'resellable'];
+        if (!validReturnTypes.includes(returnType)) {
+            throw new Error('Invalid return type');
+        }
+
+        const sql = `INSERT INTO valve_returns (
+            valve_id, return_type, returned_by_id, returned_by_type,
+            return_reason, return_fee, status
+        ) VALUES (?, ?, ?, ?, ?, ?, 'pending')`;
+
+        const result = await db.run(sql, [
+            valveId, returnType, returnedById, returnedByType,
+            returnReason, returnFee
+        ]);
+
+        return await Valve.getReturnRequest(result.lastID);
+    }
+
+    // Get return request by ID
+    static async getReturnRequest(returnId) {
+        const { db } = require('./database');
+        
+        const sql = `SELECT vr.*, v.valve_id, v.serial_number, v.model, v.manufacturer_id
+                     FROM valve_returns vr
+                     JOIN valves v ON vr.valve_id = v.id
+                     WHERE vr.id = ?`;
+        
+        const rows = await db.query(sql, [returnId]);
+        
+        if (rows.length === 0) {
+            return null;
+        }
+        
+        return rows[0];
+    }
+
+    // Get return requests with filtering
+    static async getReturnRequests(filters = {}, page = 1, limit = 10) {
+        const { db } = require('./database');
+        
+        let sql = `SELECT vr.*, v.valve_id, v.serial_number, v.model, v.manufacturer_id
+                   FROM valve_returns vr
+                   JOIN valves v ON vr.valve_id = v.id
+                   WHERE 1=1`;
+        
+        const params = [];
+        
+        if (filters.status) {
+            sql += ' AND vr.status = ?';
+            params.push(filters.status);
+        }
+        
+        if (filters.returnType) {
+            sql += ' AND vr.return_type = ?';
+            params.push(filters.returnType);
+        }
+        
+        if (filters.returnedById) {
+            sql += ' AND vr.returned_by_id = ?';
+            params.push(filters.returnedById);
+        }
+        
+        sql += ' ORDER BY vr.created_at DESC LIMIT ? OFFSET ?';
+        params.push(limit, (page - 1) * limit);
+        
+        const rows = await db.query(sql, params);
+        return rows;
+    }
+
+    // Approve return request (admin only)
+    static async approveReturnRequest(returnId, approvedBy, approvalType, blockchainHash = null) {
+        const { db: database } = require('./database');
+        
+        const validApprovalTypes = ['approved_for_burn', 'approved_for_restore', 'rejected'];
+        if (!validApprovalTypes.includes(approvalType)) {
+            throw new Error('Invalid approval type');
+        }
+        
+        try {
+            await database.run('BEGIN TRANSACTION');
+            
+            // Update return request
+            const updateSql = `UPDATE valve_returns 
+                              SET status = ?, approved_by = ?, approved_at = CURRENT_TIMESTAMP,
+                                  blockchain_transaction_hash = ?, updated_at = CURRENT_TIMESTAMP
+                              WHERE id = ?`;
+            
+            await database.run(updateSql, [approvalType, approvedBy, blockchainHash, returnId]);
+            
+            await database.run('COMMIT');
+            
+            return await Valve.getReturnRequest(returnId);
+            
+        } catch (error) {
+            await database.run('ROLLBACK');
+            throw error;
+        }
+    }
+
     // Check if valve can be transferred to specific owner
     async canBeTransferredTo(ownerId, ownerType) {
+        // Cannot transfer burned valves
+        if (this.is_burned) {
+            return { canTransfer: false, reason: 'Cannot transfer burned valve' };
+        }
+        
         // Basic validation - valve should not already be owned by the target
         if (this.current_owner_id === ownerId && this.current_owner_type === ownerType) {
             return { canTransfer: false, reason: 'Valve is already owned by this entity' };
@@ -236,11 +462,16 @@ class Valve {
                 id: this.current_owner_id,
                 type: this.current_owner_type
             },
+            burnStatus: {
+                isBurned: Boolean(this.is_burned),
+                burnReason: this.burn_reason,
+                burnedAt: this.burned_at,
+                burnedBy: this.burned_by
+            },
             created_at: this.created_at,
             updated_at: this.updated_at
         };
     }
-
     // Validation helper
     static validateValveData(valveDetails) {
         const errors = [];
