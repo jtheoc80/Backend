@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "valveId",
+        "type": "uint256"
+      }
+    ],
+   "name": "openValve",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+ },
+ {
+   "inputs": [
+     {
+       "internalType": "uint256",
+       "name": "valveId",
+       "type": "uint256"
+     }
+   ],
+   "name": "closeValve",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+ },
+ {
+   "inputs": [
+     {
+       "internalType": "uint256",
+       "name": "valveId",
+       "type": "uint256"
+     }
+   ],
+   "name": "isValveOpen",
+   "outputs": [
+     {
+       "internalType": "bool",
+       "name": "",
+       "type": "bool"
+     }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+ }
+]
