@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValveChain Privacy Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        .consent-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+        .consent-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .consent-details h3 {
+            margin: 0 0 5px 0;
+            color: #495057;
+        }
+        .consent-details p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .consent-toggle {
+            display: flex;
+            align-items: center;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: #28a745;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after {
+            transform: translateX(26px);
+        }
+        .required-badge {
+            background: #dc3545;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .region-selector {
+            margin-bottom: 20px;
+        }
+        .region-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .compliance-status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .compliance-status.compliant {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .compliance-status.non-compliant {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .data-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Privacy & Data Protection Dashboard</h1>
+            <p>Manage your privacy preferences and data rights</p>
+        </div>
+
+        <!-- Region Selection -->
+        <div class="consent-section">
+            <h2>📍 Data Region</h2>
+            <div class="region-selector">
+                <label for="regionSelect">Your data processing region:</label>
+                <select id="regionSelect">
+                    <option value="GLOBAL">Global (Multi-region)</option>
+                    <option value="EU">European Union (GDPR)</option>
+                    <option value="US">United States (CCPA)</option>
+                    <option value="BR">Brazil (LGPD)</option>
+                    <option value="SG">Singapore (PDPA)</option>
+                </select>
+                <button class="btn" onclick="updateRegion()">Update Region</button>
+            </div>
+            <div id="complianceStatus" class="compliance-status compliant">
+                ✅ Your privacy settings are compliant with applicable regulations
+            </div>
+        </div>
+
+        <!-- Consent Management -->
+        <div class="consent-section">
+            <h2>🍪 Consent Preferences</h2>
+            <div id="consentItems">
+                <!-- Consent items will be loaded here -->
+            </div>
+            <button class="btn" onclick="saveConsents()">Save Preferences</button>
+        </div>
+
+        <!-- Data Rights -->
+        <div class="consent-section">
+            <h2>📊 Your Data Rights</h2>
+            <p>Exercise your rights under privacy regulations (GDPR, CCPA, LGPD, PDPA)</p>
+            <div class="data-actions">
+                <button class="btn" onclick="exportData()">📥 Download My Data</button>
+                <button class="btn btn-danger" onclick="showDeleteModal()">🗑️ Delete My Data</button>
+            </div>
+        </div>
+
+        <!-- Processing History -->
+        <div class="consent-section">
+            <h2>📝 Data Processing History</h2>
+            <p>Recent data processing activities on your account</p>
+            <div id="processingHistory">
+                <!-- Processing history will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+            <h2>⚠️ Delete All Data</h2>
+            <p>This action will permanently delete all your personal data from our systems. This cannot be undone.</p>
+            <p><strong>Are you sure you want to proceed?</strong></p>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete Everything</button>
+                <button class="btn" onclick="closeDeleteModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock API base URL (in real implementation, this would be your actual API)
+        const API_BASE = 'http://localhost:3000/api';
+        let authToken = null;
+        let currentConsents = {};
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // For demo purposes, we'll mock authentication
+            // In real implementation, you'd get this from your auth system
+            authToken = 'demo-token';
+            
+            loadConsentRequirements();
+            loadProcessingHistory();
+        });
+
+        // Load consent requirements for the selected region
+        async function loadConsentRequirements(region = 'GLOBAL') {
+            try {
+                // Mock consent data since we don't have authentication set up
+                const mockConsents = {
+                    essential: {
+                        type: 'essential',
+                        name: 'Essential Cookies & Processing',
+                        description: 'Necessary for the website to function properly',
+                        required: true,
+                        granted: true
+                    },
+                    analytics: {
+                        type: 'analytics',
+                        name: 'Analytics & Performance',
+                        description: 'Help us understand how you use our website',
+                        required: region === 'EU',
+                        granted: false
+                    },
+                    marketing: {
+                        type: 'marketing',
+                        name: 'Marketing Communications',
+                        description: 'Send you promotional materials and updates',
+                        required: region === 'EU' || region === 'BR',
+                        granted: false
+                    },
+                    functional: {
+                        type: 'functional',
+                        name: 'Enhanced Functionality',
+                        description: 'Remember your preferences and settings',
+                        required: region === 'EU',
+                        granted: true
+                    }
+                };
+
+                currentConsents = mockConsents;
+                renderConsentItems(mockConsents);
+                updateComplianceStatus(region);
+            } catch (error) {
+                console.error('Error loading consent requirements:', error);
+            }
+        }
+
+        // Render consent items
+        function renderConsentItems(consents) {
+            const container = document.getElementById('consentItems');
+            container.innerHTML = '';
+
+            Object.values(consents).forEach(consent => {
+                const item = document.createElement('div');
+                item.className = 'consent-item';
+                item.innerHTML = `
+                    <div class="consent-details">
+                        <h3>${consent.name} ${consent.required ? '<span class="required-badge">Required</span>' : ''}</h3>
+                        <p>${consent.description}</p>
+                    </div>
+                    <div class="consent-toggle">
+                        <div class="toggle-switch ${consent.granted ? 'active' : ''}" 
+                             onclick="toggleConsent('${consent.type}')"
+                             ${consent.required ? 'style="pointer-events: none; opacity: 0.6;"' : ''}>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Toggle consent preference
+        function toggleConsent(consentType) {
+            if (currentConsents[consentType] && !currentConsents[consentType].required) {
+                currentConsents[consentType].granted = !currentConsents[consentType].granted;
+                renderConsentItems(currentConsents);
+            }
+        }
+
+        // Save consent preferences
+        async function saveConsents() {
+            try {
+                const consentsToSave = Object.values(currentConsents).map(consent => ({
+                    consentType: consent.type,
+                    isGranted: consent.granted
+                }));
+
+                // Mock API call
+                console.log('Saving consents:', consentsToSave);
+                alert('✅ Consent preferences saved successfully!');
+            } catch (error) {
+                console.error('Error saving consents:', error);
+                alert('❌ Failed to save consent preferences');
+            }
+        }
+
+        // Update data region
+        async function updateRegion() {
+            const region = document.getElementById('regionSelect').value;
+            try {
+                // Mock API call
+                console.log('Updating region to:', region);
+                await loadConsentRequirements(region);
+                alert(`✅ Data region updated to ${region}`);
+            } catch (error) {
+                console.error('Error updating region:', error);
+                alert('❌ Failed to update data region');
+            }
+        }
+
+        // Update compliance status
+        function updateComplianceStatus(region) {
+            const statusDiv = document.getElementById('complianceStatus');
+            const requiredConsents = Object.values(currentConsents).filter(c => c.required && !c.granted);
+            
+            if (requiredConsents.length === 0) {
+                statusDiv.className = 'compliance-status compliant';
+                statusDiv.innerHTML = `✅ Your privacy settings are compliant with ${region} regulations`;
+            } else {
+                statusDiv.className = 'compliance-status non-compliant';
+                statusDiv.innerHTML = `⚠️ Missing required consents for ${region} compliance: ${requiredConsents.map(c => c.name).join(', ')}`;
+            }
+        }
+
+        // Export user data
+        async function exportData() {
+            try {
+                // Mock API call
+                console.log('Exporting user data...');
+                
+                // Simulate data export
+                const mockData = {
+                    exportDate: new Date().toISOString(),
+                    userId: 'demo-user',
+                    regulation: 'Multiple (GDPR, CCPA, LGPD, PDPA)',
+                    data: {
+                        profile: { username: 'demouser', email: 'demo@example.com' },
+                        consents: currentConsents,
+                        processingHistory: []
+                    }
+                };
+                
+                // Create download
+                const blob = new Blob([JSON.stringify(mockData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `my-data-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert('✅ Data export completed and downloaded!');
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('❌ Failed to export data');
+            }
+        }
+
+        // Show delete confirmation modal
+        function showDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        // Close delete confirmation modal
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        // Confirm data deletion
+        async function confirmDelete() {
+            try {
+                // Mock API call
+                console.log('Deleting user data...');
+                
+                closeDeleteModal();
+                alert('⚠️ Data deletion request submitted. In a real implementation, your data would be permanently deleted.');
+                
+                // In real implementation, you might redirect to a confirmation page
+                // or show a different view
+            } catch (error) {
+                console.error('Error deleting data:', error);
+                alert('❌ Failed to delete data');
+            }
+        }
+
+        // Load processing history
+        function loadProcessingHistory() {
+            const container = document.getElementById('processingHistory');
+            
+            // Mock processing history
+            const mockHistory = [
+                { date: '2024-01-15', activity: 'User login', purpose: 'Authentication', legalBasis: 'Legitimate Interest' },
+                { date: '2024-01-14', activity: 'Profile update', purpose: 'Account management', legalBasis: 'Contract' },
+                { date: '2024-01-13', activity: 'Consent update', purpose: 'Privacy preferences', legalBasis: 'Consent' },
+                { date: '2024-01-12', activity: 'Analytics data collection', purpose: 'Website optimization', legalBasis: 'Consent' }
+            ];
+            
+            container.innerHTML = mockHistory.map(item => `
+                <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                    <strong>${item.activity}</strong> - ${item.date}<br>
+                    <small>Purpose: ${item.purpose} | Legal Basis: ${item.legalBasis}</small>
+                </div>
+            `).join('');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteModal');
+            if (event.target === modal) {
+                closeDeleteModal();
+            }
+        }
+    </script>
+</body>
+</html>

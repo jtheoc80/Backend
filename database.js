@@ -157,6 +157,78 @@ const initDatabase = async () => {
         await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
         await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
 
+        // Privacy and consent management tables
+        
+        // User consent table for GDPR/CCPA compliance
+        await run(`CREATE TABLE IF NOT EXISTS user_consent (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            consent_type VARCHAR(50) NOT NULL,
+            purpose VARCHAR(100) NOT NULL,
+            is_granted BOOLEAN NOT NULL DEFAULT 0,
+            consent_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expiry_date DATETIME,
+            withdrawal_date DATETIME,
+            consent_source VARCHAR(50) DEFAULT 'web',
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            legal_basis VARCHAR(100),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Data processing logs for audit trail
+        await run(`CREATE TABLE IF NOT EXISTS data_processing_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            data_type VARCHAR(100) NOT NULL,
+            processing_purpose VARCHAR(200) NOT NULL,
+            legal_basis VARCHAR(100) NOT NULL,
+            processor VARCHAR(100),
+            data_location VARCHAR(50),
+            retention_period VARCHAR(50),
+            processing_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            metadata TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Data residency configuration table
+        await run(`CREATE TABLE IF NOT EXISTS data_residency_config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            region VARCHAR(10) NOT NULL UNIQUE,
+            region_name VARCHAR(100) NOT NULL,
+            data_location VARCHAR(100) NOT NULL,
+            allowed_processing BOOLEAN DEFAULT 1,
+            transfer_restrictions TEXT,
+            regulatory_framework VARCHAR(100),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // User data requests table (for right-to-access, right-to-erase)
+        await run(`CREATE TABLE IF NOT EXISTS user_data_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            request_type VARCHAR(20) NOT NULL CHECK (request_type IN ('access', 'delete', 'portability', 'rectification')),
+            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'rejected')),
+            request_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            completion_date DATETIME,
+            request_data TEXT,
+            response_data TEXT,
+            notes TEXT,
+            processed_by INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (processed_by) REFERENCES users(id)
+        )`);
+
+        // Add privacy-related columns to users table
+        await run(`ALTER TABLE users ADD COLUMN data_region VARCHAR(10) DEFAULT 'global'`).catch(() => {});
+        await run(`ALTER TABLE users ADD COLUMN marketing_consent BOOLEAN DEFAULT 0`).catch(() => {});
+        await run(`ALTER TABLE users ADD COLUMN analytics_consent BOOLEAN DEFAULT 0`).catch(() => {});
+        await run(`ALTER TABLE users ADD COLUMN data_retention_date DATETIME`).catch(() => {});
+        await run(`ALTER TABLE users ADD COLUMN privacy_settings TEXT`).catch(() => {});
+
         // Insert sample manufacturer data if not exists
         await run(`INSERT OR IGNORE INTO manufacturers (id, name, wallet_address, permissions) VALUES 
             ('mfg001', 'Emerson Process Management', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8b', 'tokenize_valves,read_inventory,manage_distributors'),
@@ -175,6 +247,14 @@ const initDatabase = async () => {
         await run(`INSERT OR IGNORE INTO distributors (id, name, wallet_address, contact_email) VALUES 
             ('dist001', 'Industrial Valve Solutions Inc', '0x123d35Cc6436C0532925a3b8D0000a5492d95a1', 'sales@ivs-inc.com'),
             ('dist002', 'Global Valve Distribution', '0x456d35Cc6436C0532925a3b8D0000a5492d95a2', 'info@gvd.com')`);
+
+        // Insert sample data residency configuration
+        await run(`INSERT OR IGNORE INTO data_residency_config (region, region_name, data_location, allowed_processing, regulatory_framework) VALUES 
+            ('EU', 'European Union', 'eu-west-1', 1, 'GDPR'),
+            ('US', 'United States', 'us-east-1', 1, 'CCPA'),
+            ('BR', 'Brazil', 'sa-east-1', 1, 'LGPD'),
+            ('SG', 'Singapore', 'ap-southeast-1', 1, 'PDPA'),
+            ('GLOBAL', 'Global', 'multi-region', 1, 'Mixed')`);
 
         console.log('Database tables initialized successfully');
     } catch (error) {

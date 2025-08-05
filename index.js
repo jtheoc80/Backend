@@ -3,6 +3,7 @@ const userRoutes = require('./userRoutes');
 const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
 const distributorRoutes = require('./distributorRoutes');
+const privacyRoutes = require('./privacyRoutes');
 const blockchainService = require('./blockchainService');
 
 const app = express();
@@ -21,6 +22,9 @@ app.get('/api/health', (req, res) => {
 // Add user management routes
 app.use('/api/auth', userRoutes);
 app.use('/api', auditLogsRoute);
+
+// Add privacy and data protection routes
+app.use('/api/privacy', privacyRoutes);
 
 // Add manufacturer and valve tokenization routes
 app.use('/api', manufacturerRoutes);
@@ -84,4 +88,14 @@ app.listen(PORT, () => {
   console.log('  GET /api/territories');
   console.log('  GET /api/territories/type/:type');
   console.log('  GET /api/territories/:id');
+  console.log('');
+  console.log('Data Privacy and Compliance endpoints available:');
+  console.log('  GET /api/privacy/dashboard');
+  console.log('  GET /api/privacy/consent/requirements');
+  console.log('  POST /api/privacy/consent');
+  console.log('  PUT /api/privacy/region');
+  console.log('  POST /api/privacy/data/export');
+  console.log('  POST /api/privacy/data/delete');
+  console.log('  GET /api/privacy/data/processing-history');
+  console.log('  GET /api/privacy/regions');
 });

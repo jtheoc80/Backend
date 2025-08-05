@@ -168,6 +168,43 @@ class User {
         const { password, reset_token, reset_token_expires, ...userWithoutSensitiveData } = this;
         return userWithoutSensitiveData;
     }
+
+    // Update privacy settings
+    static async updatePrivacySettings(userId, settings) {
+        const sql = `UPDATE users SET privacy_settings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        return await db.run(sql, [JSON.stringify(settings), userId]);
+    }
+
+    // Get privacy settings
+    static async getPrivacySettings(userId) {
+        const sql = `SELECT privacy_settings FROM users WHERE id = ?`;
+        const rows = await db.query(sql, [userId]);
+        
+        if (rows.length === 0) {
+            return null;
+        }
+        
+        const settings = rows[0].privacy_settings;
+        return settings ? JSON.parse(settings) : {};
+    }
+
+    // Update marketing consent
+    static async updateMarketingConsent(userId, consent) {
+        const sql = `UPDATE users SET marketing_consent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        return await db.run(sql, [consent ? 1 : 0, userId]);
+    }
+
+    // Update analytics consent
+    static async updateAnalyticsConsent(userId, consent) {
+        const sql = `UPDATE users SET analytics_consent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        return await db.run(sql, [consent ? 1 : 0, userId]);
+    }
+
+    // Set data retention date
+    static async setDataRetentionDate(userId, retentionDate) {
+        const sql = `UPDATE users SET data_retention_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        return await db.run(sql, [retentionDate, userId]);
+    }
 }
 
 module.exports = User;
