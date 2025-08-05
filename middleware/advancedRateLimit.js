@@ -205,9 +205,6 @@ class AdvancedRateLimiter {
       keyGenerator: (req) => {
         return req.ip || req.connection.remoteAddress || 'unknown';
       },
-      validate: {
-        delayMs: false // Disable the warning
-      }
     });
   }
 
