@@ -65,8 +65,10 @@ const createSampleData = async () => {
         }
 
         console.log('\n=== Sample Data Summary ===');
-        console.log('Admin credentials: username=admin, password=admin123');
-        console.log('Test user credentials: username=testuser, password=test123');
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Admin credentials: username=admin, password=admin123');
+            console.log('Test user credentials: username=testuser, password=test123');
+        }
         
     } catch (err) {
         console.error('Error creating sample data:', err);
