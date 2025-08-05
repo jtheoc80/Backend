@@ -113,6 +113,17 @@ const privacyConfig = {
                 'Data breach notification requirements'
             ],
             requiredConsent: ['marketing', 'analytics']
+        },
+        GLOBAL: {
+            region: 'GLOBAL',
+            name: 'Global',
+            regulation: 'None',
+            dataLocation: 'us-east-1', // Default global location
+            transferRestrictions: [
+                'No specific regional restrictions apply',
+                'Follow company-wide privacy policy'
+            ],
+            requiredConsent: ['marketing', 'analytics', 'functional']
         }
     },
 
