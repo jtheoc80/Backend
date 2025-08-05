@@ -3,6 +3,7 @@ const userRoutes = require('./userRoutes');
 const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
 const distributorRoutes = require('./distributorRoutes');
+const organizationRoutes = require('./organizationRoutes');
 const blockchainService = require('./blockchainService');
 
 const app = express();
@@ -27,6 +28,9 @@ app.use('/api', manufacturerRoutes);
 
 // Add distributor management routes
 app.use('/api', distributorRoutes);
+
+// Add organization and project management routes
+app.use('/api', organizationRoutes);
 
 // Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {
@@ -84,4 +88,19 @@ app.listen(PORT, () => {
   console.log('  GET /api/territories');
   console.log('  GET /api/territories/type/:type');
   console.log('  GET /api/territories/:id');
+  console.log('');
+  console.log('Organization and project management endpoints available:');
+  console.log('  POST /api/organizations/register');
+  console.log('  GET /api/organizations/:id');
+  console.log('  GET /api/organizations/:id/users');
+  console.log('  POST /api/organizations/users/:userId/access');
+  console.log('  GET /api/organizations/:id/projects');
+  console.log('  POST /api/organizations/projects');
+  console.log('  GET /api/projects/:id');
+  console.log('  PUT /api/projects/:id');
+  console.log('  POST /api/projects/:id/assign');
+  console.log('  DELETE /api/projects/:id/users/:userId');
+  console.log('  POST /api/projects/:id/complete');
+  console.log('  GET /api/users/projects');
+  console.log('  DELETE /api/projects/:id');
 });

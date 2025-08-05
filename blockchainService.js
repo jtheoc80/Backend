@@ -165,6 +165,53 @@ class BlockchainService {
         }
     }
 
+    // Register organization on blockchain (only one allowed)
+    async registerOrganization(organizationData) {
+        if (this.mockMode) {
+            return this.mockRegisterOrganization(organizationData);
+        }
+
+        try {
+            const tx = await this.contract.registerCompany(
+                organizationData.id,
+                organizationData.name,
+                organizationData.wallet_address
+            );
+            
+            const receipt = await tx.wait();
+            
+            return {
+                success: true,
+                transactionHash: receipt.transactionHash,
+                blockNumber: receipt.blockNumber,
+                gasUsed: receipt.gasUsed.toString()
+            };
+        } catch (error) {
+            console.error('Blockchain organization registration failed:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Check if any organization is registered on blockchain
+    async isOrganizationRegistered() {
+        if (this.mockMode) {
+            // In mock mode, check database for registered organizations
+            const Organization = require('./organizationModel');
+            return await Organization.isAnyRegisteredOnBlockchain();
+        }
+
+        try {
+            const isRegistered = await this.contract.isCompanyRegistered();
+            return isRegistered;
+        } catch (error) {
+            console.error('Failed to check blockchain registration status:', error);
+            return false;
+        }
+    }
+
     // Mock functions for development
 
     mockRegisterDistributor(distributorData) {
@@ -207,6 +254,18 @@ class BlockchainService {
     mockTransferValveOwnership(valveTokenId, fromOwnerId, toOwnerId, ownerType) {
         const transactionHash = this.generateMockTransactionHash();
         console.log(`Mock: Transferred valve ${valveTokenId} from ${fromOwnerId} to ${toOwnerId} (${ownerType})`);
+        
+        return {
+            success: true,
+            transactionHash,
+            blockNumber: Math.floor(Math.random() * 1000000) + 18000000,
+            gasUsed: (Math.floor(Math.random() * 50000) + 21000).toString()
+        };
+    }
+
+    mockRegisterOrganization(organizationData) {
+        const transactionHash = this.generateMockTransactionHash();
+        console.log(`Mock: Registered organization ${organizationData.id} (${organizationData.name}) on blockchain`);
         
         return {
             success: true,
