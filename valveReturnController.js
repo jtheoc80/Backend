@@ -43,15 +43,9 @@ const createReturnRequest = async (req, res) => {
 
         // Determine returner info based on user role
         let returnedById, returnedByType;
-        if (userRole === 'distributor' || userRole === 'manufacturer') {
-            returnedById = req.user.username || req.user.id;
-            returnedByType = userRole;
-        } else if (userRole === 'admin') {
-            // Admins can create returns on behalf of manufacturers/distributors
-            // Default to manufacturer for admin users
-            returnedById = req.user.username || req.user.id;
-            returnedByType = 'manufacturer';
-        } else {
+        returnedById = req.user.username || req.user.id;
+        returnedByType = getReturnedByType(userRole);
+        if (!returnedByType) {
             return res.status(403).json({ 
                 error: 'Only manufacturers, distributors, and admins can create return requests' 
             });
