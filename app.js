@@ -35,10 +35,12 @@ app.use('/api/admin', auditLogsRoute);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+    // Log full error details for debugging
     console.error(err.stack);
+    // Only send generic error details to client, even in development
     res.status(500).json({ 
         error: 'Something went wrong!',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+        code: err.code || undefined // Optionally include a safe error code
     });
 });
 
