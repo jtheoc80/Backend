@@ -49,7 +49,7 @@ const registerOrganization = async (req, res) => {
 
         if (!blockchainResult.success) {
             // Delete organization if blockchain registration fails
-            await organization.delete();
+            await organization.remove();
             return res.status(500).json({
                 error: 'Failed to register organization on blockchain',
                 details: blockchainResult.error
