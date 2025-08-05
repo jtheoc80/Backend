@@ -59,7 +59,7 @@ const checkUserAccess = (req, res, next) => {
         const requestedUserId = req.params.userId || req.body.userId;
         
         // Allow access if user is admin or accessing their own data
-        if (req.user.role === 'admin' || req.user.id == requestedUserId) {
+        if (req.user.role === 'admin' || req.user.id === requestedUserId) {
             next();
         } else {
             res.status(403).json({ error: 'Access denied' });
