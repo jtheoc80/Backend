@@ -5,12 +5,18 @@ const projectController = require('./projectController');
 const { 
     verifyToken, 
     requireOrganizationAdmin, 
-    requireOrganizationAccess,
-    rateLimit 
+    requireOrganizationAccess
 } = require('./authMiddleware');
 
+// Rate limiting middleware
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+});
+
 // Apply rate limiting to all organization routes
-router.use(rateLimit(15 * 60 * 1000, 100)); // 100 requests per 15 minutes
+router.use(limiter);
 
 // Organization management routes
 router.post('/organizations/register', 
