@@ -1,4 +1,5 @@
 const { ethers } = require('ethers');
+const transactionFeeService = require('./transactionFeeService');
 
 class BlockchainService {
     constructor() {
@@ -257,6 +258,128 @@ class BlockchainService {
                 error: error.message
             };
         }
+    }
+
+    // Calculate transaction fee based on user role and amount
+    calculateTransactionFee(userRole, transactionAmount) {
+        return transactionFeeService.calculateFee(userRole, transactionAmount);
+    }
+
+    // Execute transaction with fee calculation
+    async executeTransactionWithFees(userRole, transactionAmount, transactionFunction, ...args) {
+        try {
+            // Calculate fees
+            const feeCalculation = this.calculateTransactionFee(userRole, transactionAmount);
+            
+            if (!feeCalculation.success) {
+                return {
+                    success: false,
+                    error: 'Fee calculation failed: ' + feeCalculation.error,
+                    feeCalculation
+                };
+            }
+
+            // Validate fee calculation
+            if (!transactionFeeService.isValidFeeCalculation(feeCalculation)) {
+                return {
+                    success: false,
+                    error: 'Invalid fee calculation result',
+                    feeCalculation
+                };
+            }
+
+            // Execute the actual transaction
+            const transactionResult = await transactionFunction.apply(this, args);
+            
+            // Add fee information to the result
+            if (transactionResult.success) {
+                transactionResult.feeDetails = {
+                    originalAmount: feeCalculation.transactionAmount,
+                    feeAmount: feeCalculation.feeAmount,
+                    netAmount: feeCalculation.netAmount,
+                    feeBasisPoints: feeCalculation.feeBasisPoints,
+                    feePercentage: feeCalculation.calculation.percentage,
+                    userRole: feeCalculation.role
+                };
+            }
+
+            return transactionResult;
+        } catch (error) {
+            console.error('Transaction with fees failed:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Enhanced distributor registration with fees
+    async registerDistributorWithFees(distributorData, userRole, estimatedTransactionValue = 0.01) {
+        return await this.executeTransactionWithFees(
+            userRole,
+            estimatedTransactionValue,
+            this.registerDistributor,
+            distributorData
+        );
+    }
+
+    // Enhanced distributor rights assignment with fees
+    async assignDistributorRightsWithFees(manufacturerId, distributorId, territoryId, permissions, userRole, estimatedTransactionValue = 0.01) {
+        return await this.executeTransactionWithFees(
+            userRole,
+            estimatedTransactionValue,
+            this.assignDistributorRights,
+            manufacturerId,
+            distributorId,
+            territoryId,
+            permissions
+        );
+    }
+
+    // Enhanced distributor rights revocation with fees
+    async revokeDistributorRightsWithFees(manufacturerId, distributorId, territoryId, userRole, estimatedTransactionValue = 0.01) {
+        return await this.executeTransactionWithFees(
+            userRole,
+            estimatedTransactionValue,
+            this.revokeDistributorRights,
+            manufacturerId,
+            distributorId,
+            territoryId
+        );
+    }
+
+    // Enhanced valve ownership transfer with fees
+    async transferValveOwnershipWithFees(valveTokenId, fromOwnerId, toOwnerId, ownerType, userRole, estimatedTransactionValue = 0.01) {
+        return await this.executeTransactionWithFees(
+            userRole,
+            estimatedTransactionValue,
+            this.transferValveOwnership,
+            valveTokenId,
+            fromOwnerId,
+            toOwnerId,
+            ownerType
+        );
+    }
+
+    // Get fee estimate for a transaction
+    async getTransactionFeeEstimate(userRole, transactionType = 'general', estimatedValue = 0.01) {
+        const feeCalculation = this.calculateTransactionFee(userRole, estimatedValue);
+        
+        return {
+            success: feeCalculation.success,
+            transactionType,
+            userRole: feeCalculation.role,
+            estimatedTransactionValue: estimatedValue,
+            feeDetails: feeCalculation.success ? {
+                feeBasisPoints: feeCalculation.feeBasisPoints,
+                feeRate: feeCalculation.feeRate,
+                feeAmount: feeCalculation.feeAmount,
+                feePercentage: feeCalculation.calculation.percentage,
+                netAmount: feeCalculation.netAmount,
+                formula: feeCalculation.calculation.formula
+            } : null,
+            error: feeCalculation.error
+        };
     }
 }
 
