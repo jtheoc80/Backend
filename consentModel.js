@@ -194,7 +194,7 @@ class UserConsent {
                 });
                 results.push(result);
             } catch (error) {
-                console.error(`Error updating consent ${consentType}:`, error);
+                console.error('Error updating consent %s:', consentType, error);
                 throw error;
             }
         }
