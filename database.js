@@ -137,7 +137,7 @@ const initDatabase = async () => {
             UNIQUE(manufacturer_id, distributor_id, territory_id)
         )`);
 
-        // Valve ownership transfers table
+        // Valve ownership transfers table (this will be recreated later with plant support)
         await run(`CREATE TABLE IF NOT EXISTS valve_ownership_transfers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             valve_id INTEGER NOT NULL,
@@ -155,7 +155,66 @@ const initDatabase = async () => {
 
         // Add columns to valves table for ownership tracking
         await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
-        await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
+        await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer'`).catch(() => {});
+
+        // Update existing CHECK constraints to allow 'plant' owner type
+        // First, we need to recreate the valve_ownership_transfers table with the new constraints
+        await run(`CREATE TABLE IF NOT EXISTS valve_ownership_transfers_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            valve_id INTEGER NOT NULL,
+            from_owner_id VARCHAR(50) NOT NULL,
+            from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor', 'plant')),
+            to_owner_id VARCHAR(50) NOT NULL,
+            to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor', 'plant')),
+            transfer_type VARCHAR(20) NOT NULL CHECK (transfer_type IN ('initial_assignment', 'transfer', 'revoke')),
+            blockchain_transaction_hash VARCHAR(66),
+            reason TEXT,
+            is_completed BOOLEAN DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (valve_id) REFERENCES valves(id)
+        )`).catch(() => {});
+
+        // Copy existing data
+        await run(`INSERT OR IGNORE INTO valve_ownership_transfers_new 
+                   SELECT * FROM valve_ownership_transfers`).catch(() => {});
+
+        // Drop the old table and rename the new one
+        await run(`DROP TABLE IF EXISTS valve_ownership_transfers`).catch(() => {});
+        await run(`ALTER TABLE valve_ownership_transfers_new RENAME TO valve_ownership_transfers`).catch(() => {});
+
+        // Also update the valves table constraint
+        await run(`CREATE TABLE IF NOT EXISTS valves_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token_id VARCHAR(50) UNIQUE NOT NULL,
+            valve_id VARCHAR(100) UNIQUE NOT NULL,
+            serial_number VARCHAR(255) UNIQUE NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            manufacturer_id VARCHAR(50) NOT NULL,
+            model VARCHAR(255) NOT NULL,
+            diameter REAL NOT NULL,
+            pressure REAL NOT NULL,
+            temperature REAL NOT NULL,
+            material VARCHAR(255) NOT NULL,
+            connection_type VARCHAR(255) NOT NULL,
+            flow_coefficient REAL,
+            manufacture_date DATE NOT NULL,
+            warranty_months INTEGER DEFAULT 12,
+            certifications TEXT,
+            transaction_hash VARCHAR(66),
+            current_owner_id VARCHAR(50),
+            current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor', 'plant')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
+        )`).catch(() => {});
+
+        // Copy existing valves data
+        await run(`INSERT OR IGNORE INTO valves_new 
+                   SELECT * FROM valves`).catch(() => {});
+
+        // Drop the old valves table and rename the new one
+        await run(`DROP TABLE IF EXISTS valves`).catch(() => {});
+        await run(`ALTER TABLE valves_new RENAME TO valves`).catch(() => {});
 
         // Purchase Orders table
         await run(`CREATE TABLE IF NOT EXISTS purchase_orders (
