@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import config from './config.js';
 
 async function sendEmail(to, subject, text) {
-    let transporter = nodemailer.createTransporter({
+    let transporter = nodemailer.createTransport({
         service: 'Gmail', // or another service like 'Yahoo', 'Outlook'
         auth: {
             user: config.email.user, // your email
