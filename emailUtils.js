@@ -3,7 +3,7 @@ import logger from './logger.js';
 
 async function sendEmail(to, subject, text) {
     try {
-        let transporter = nodemailer.createTransporter({
+        let transporter = nodemailer.createTransport({
             service: 'Gmail', // or another service like 'Yahoo', 'Outlook'
             auth: {
                 user: process.env.EMAIL_USER, // your email
