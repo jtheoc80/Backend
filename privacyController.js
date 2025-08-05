@@ -18,7 +18,14 @@ class PrivacyController {
             
             // Get user region and compliance info
             const user = await db.query('SELECT data_region FROM users WHERE id = ?', [userId]);
-            const userRegion = (user[0]?.data_region || 'GLOBAL').toUpperCase();
+            if (!user || user.length === 0) {
+                res.status(404).json({
+                    error: 'User not found',
+                    code: 'USER_NOT_FOUND'
+                });
+                return;
+            }
+            const userRegion = (user[0].data_region || 'GLOBAL').toUpperCase();
             const compliance = userRegion !== 'GLOBAL' 
                 ? await UserConsent.checkRegionalCompliance(userId, userRegion)
                 : { compliant: true, region: 'GLOBAL', regulation: 'Mixed' };
