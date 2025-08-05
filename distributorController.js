@@ -562,8 +562,7 @@ const transferValveOwnership = async (req, res) => {
         // Transfer ownership in database (skip validation since we already validated)
         const transferResult = await valve.transferOwnership(distributorId, 'distributor', 'transfer', reason, true);
 
-        // Log successful transfer for audit
-        await valve.logTransferAttempt(distributorId, 'distributor', true, reason);
+        // Note: transferOwnership already logs the successful transfer, so we don't need to log again
 
         // await logActivity(null, 'valve_ownership_transferred', { 
         //     valveTokenId,
@@ -703,8 +702,7 @@ const transferValveToDistributor = async (req, res) => {
         // Transfer ownership in database (skip validation since we already validated)
         const transferResult = await valve.transferOwnership(toDistributorId, 'distributor', 'transfer', reason, true);
 
-        // Log successful transfer for audit
-        await valve.logTransferAttempt(toDistributorId, 'distributor', true, reason);
+        // Note: transferOwnership already logs the successful transfer, so we don't need to log again
 
         res.json({
             success: true,
@@ -774,7 +772,17 @@ const transferValveToPlant = async (req, res) => {
             });
         }
 
-        // Plant transfers are always allowed (no limits apply)
+        // Check if valve is already owned by a plant (plant ownership should be final)
+        if (valve.isOwnedByPlant()) {
+            return res.status(403).json({
+                success: false,
+                message: 'No ownership transfers are allowed once a valve is transferred to a plant',
+                errors: ['Plant ownership is final'],
+                errorCode: 'PLANT_OWNERSHIP_FINAL'
+            });
+        }
+
+        // Plant transfers are allowed for distributors and manufacturers, but not from plants
         // This is the terminal state for valve ownership
 
         // Perform blockchain transfer
@@ -799,8 +807,7 @@ const transferValveToPlant = async (req, res) => {
         // Transfer ownership in database (skip validation since plant transfers are always allowed)
         const transferResult = await valve.transferOwnership(plantId, 'plant', 'transfer', reason, true);
 
-        // Log successful transfer for audit
-        await valve.logTransferAttempt(plantId, 'plant', true, reason);
+        // Note: transferOwnership already logs the successful transfer, so we don't need to log again
 
         res.json({
             success: true,
