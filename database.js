@@ -30,7 +30,10 @@ const db = {
         const start = Date.now();
         const res = await pool.query(text, params);
         const duration = Date.now() - start;
-        console.log('Executed query', { text, duration, rows: res.rowCount });
+        // For security, do not log full query text. Log a hash instead.
+        const crypto = require('crypto');
+        const queryHash = crypto.createHash('sha256').update(text).digest('hex');
+        console.log('Executed query', { queryHash, duration, rows: res.rowCount });
         return res;
     },
     getClient: async () => {
