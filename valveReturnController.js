@@ -272,7 +272,7 @@ const burnValveToken = async (req, res) => {
         }
 
         // Calculate transaction fees (0.5% of total transaction)
-        const feeCalc = transactionFeeService.calculateFee(adminRole, 0, returnFee);
+        const feeCalc = transactionFeeService.calculateFee(adminRole, returnFee, returnFee);
         
         // Burn the valve token
         const burnResult = await valve.burnToken(adminId, burnReason);
