@@ -85,7 +85,7 @@ router.post('/reset_password', validatePassword, authRateLimit, async (req, res)
         }
 
         // Hash new password
-        const hashedPassword = await bcrypt.hash(password, 12);
+        const hashedPassword = await bcrypt.hash(password, 10);
         
         // Update password and consume token
         const updated = userModel.updateUserPassword(tokenData.email, hashedPassword);
