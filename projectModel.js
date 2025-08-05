@@ -141,7 +141,9 @@ class Project {
 
     // Check if user is assigned to project
     isUserAssigned(userId) {
-        return this.assigned_users.includes(parseInt(userId));
+        const parsedId = parseInt(userId, 10);
+        if (isNaN(parsedId)) return false;
+        return this.assigned_users.includes(parsedId);
     }
 
     // Check if user can manage project (is creator or organization admin)
