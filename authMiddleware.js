@@ -76,7 +76,7 @@ const authMiddleware = {
       return next(); // Continue without authentication
     }
 
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', async (err, decoded) => {
+    jwt.verify(token, jwtSecret, async (err, decoded) => {
       if (err) {
         return next(); // Continue without authentication on token error
       }
