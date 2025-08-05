@@ -1,6 +1,7 @@
 {
   "name": "valvechain-sidecar-api",
   "version": "1.0.0",
+  "description": "ValveChain Sidecar API for blockchain valve management",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -8,6 +9,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
+  "keywords": ["valvechain", "blockchain", "api", "valve", "management"],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.1",
@@ -22,6 +26,9 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "jest": {
     "testEnvironment": "node",
