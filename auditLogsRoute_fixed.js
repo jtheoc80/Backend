@@ -1,8 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { checkAdmin, db } = require('./middleware');
+const rateLimit = require('express-rate-limit');
 
-router.get('/audit_logs', checkAdmin, async (req, res) => {
+const auditLogsLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests, please try again later.'
+});
+
+router.get('/audit_logs', auditLogsLimiter, checkAdmin, async (req, res) => {
     try {
         const { page = 1, limit = 10, user, action, startDate, endDate } = req.query;
         const offset = (page - 1) * limit;
