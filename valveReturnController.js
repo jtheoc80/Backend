@@ -191,8 +191,15 @@ const approveReturnRequest = async (req, res) => {
             });
         }
 
-        // Generate mock blockchain transaction hash
-        const blockchainHash = Valve.generateTransactionHash();
+        // TODO: Replace with real blockchain transaction in production.
+        // The following is a development placeholder. DO NOT USE IN PRODUCTION.
+        let blockchainHash;
+        if (process.env.NODE_ENV === 'production') {
+            // throw error or perform real blockchain transaction
+            throw new Error('Blockchain transaction integration required in production.');
+        } else {
+            blockchainHash = Valve.generateTransactionHash();
+        }
 
         // Approve the return request
         const updatedRequest = await Valve.approveReturnRequest(
