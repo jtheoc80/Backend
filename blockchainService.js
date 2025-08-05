@@ -14,6 +14,10 @@ class BlockchainService {
         this.rpcUrl = process.env.RPC_URL || 'https://sepolia.infura.io/v3/your-project-id';
         this.privateKey = process.env.PRIVATE_KEY;
         
+        // Fee wallet configuration - designated wallet for collecting transaction fees
+        // TODO: Replace with actual fee collection wallet address in production
+        this.feeWalletAddress = process.env.FEE_WALLET_ADDRESS || '0xFEEWALLETADDRESS';
+        
         // Initialize provider (mock for now)
         this.provider = null;
         this.contract = null;
@@ -260,6 +264,91 @@ class BlockchainService {
         }
     }
 
+    /**
+     * Transfer collected transaction fee to the designated fee wallet
+     * @param {number} feeAmount - Amount of fee to transfer (in ETH)
+     * @param {string} transactionType - Type of transaction for logging
+     * @param {string} userRole - User role for context
+     * @returns {Object} Transfer result
+     */
+    async transferFeeToWallet(feeAmount, transactionType = 'general', userRole = 'unknown') {
+        // Skip fee transfer if amount is zero or negative
+        if (!feeAmount || feeAmount <= 0) {
+            return {
+                success: true,
+                skipped: true,
+                reason: 'No fee to transfer',
+                feeAmount: 0
+            };
+        }
+
+        if (this.mockMode) {
+            return this.mockTransferFeeToWallet(feeAmount, transactionType, userRole);
+        }
+
+        try {
+            // Ensure wallet is initialized
+            if (!this.wallet) {
+                throw new Error('Blockchain wallet not initialized');
+            }
+
+            // Convert ETH amount to Wei
+            const feeAmountWei = ethers.parseEther(feeAmount.toString());
+            
+            // Create transaction to transfer fee to designated wallet
+            const tx = await this.wallet.sendTransaction({
+                to: this.feeWalletAddress,
+                value: feeAmountWei,
+                gasLimit: 21000 // Standard ETH transfer gas limit
+            });
+            
+            const receipt = await tx.wait();
+            
+            console.log(`Fee transfer successful: ${feeAmount} ETH to ${this.feeWalletAddress}`);
+            
+            return {
+                success: true,
+                feeAmount,
+                feeWalletAddress: this.feeWalletAddress,
+                transactionHash: receipt.transactionHash,
+                blockNumber: receipt.blockNumber,
+                gasUsed: receipt.gasUsed.toString(),
+                transactionType,
+                userRole
+            };
+        } catch (error) {
+            console.error('Fee transfer failed:', error);
+            return {
+                success: false,
+                error: error.message,
+                feeAmount,
+                feeWalletAddress: this.feeWalletAddress,
+                transactionType,
+                userRole
+            };
+        }
+    }
+
+    /**
+     * Mock fee transfer for development mode
+     */
+    mockTransferFeeToWallet(feeAmount, transactionType, userRole) {
+        const transactionHash = this.generateMockTransactionHash();
+        console.log(`Mock: Transferred fee ${feeAmount} ETH to fee wallet ${this.feeWalletAddress} for ${transactionType} by ${userRole}`);
+        
+        return {
+            success: true,
+            feeAmount,
+            feeWalletAddress: this.feeWalletAddress,
+            transactionHash,
+            blockNumber: Math.floor(Math.random() * 1000000) + 18000000,
+            gasUsed: '21000',
+            transactionType,
+            userRole,
+            mock: true
+        };
+    }
+
     // Calculate transaction fee based on user role and amount
     calculateTransactionFee(userRole, transactionAmount) {
         return transactionFeeService.calculateFee(userRole, transactionAmount);
@@ -291,6 +380,22 @@ class BlockchainService {
             // Execute the actual transaction
             const transactionResult = await transactionFunction.apply(this, args);
             
+            // If transaction was successful, transfer the collected fee to the designated wallet
+            if (transactionResult.success && feeCalculation.feeAmount > 0) {
+                const feeTransferResult = await this.transferFeeToWallet(
+                    feeCalculation.feeAmount,
+                    transactionFunction.name || 'blockchain_transaction',
+                    feeCalculation.role
+                );
+                
+                // Add fee transfer information to the result
+                transactionResult.feeTransfer = feeTransferResult;
+                
+                if (!feeTransferResult.success && !feeTransferResult.skipped) {
+                    console.warn('Fee transfer failed, but main transaction succeeded:', feeTransferResult.error);
+                }
+            }
+            
             // Add fee information to the result
             if (transactionResult.success) {
                 transactionResult.feeDetails = {
@@ -299,7 +404,8 @@ class BlockchainService {
                     netAmount: feeCalculation.netAmount,
                     feeBasisPoints: feeCalculation.feeBasisPoints,
                     feePercentage: feeCalculation.calculation.percentage,
-                    userRole: feeCalculation.role
+                    userRole: feeCalculation.role,
+                    feeWalletAddress: this.feeWalletAddress
                 };
             }
 
@@ -358,6 +464,63 @@ class BlockchainService {
             fromOwnerId,
             toOwnerId,
             ownerType
+        );
+    }
+
+    // Mock purchase order approval (placeholder for actual PO blockchain logic)
+    async approvePurchaseOrder(poId, approvalData) {
+        if (this.mockMode) {
+            return this.mockApprovePurchaseOrder(poId, approvalData);
+        }
+
+        try {
+            // This would integrate with actual PO smart contract
+            const tx = await this.contract.approvePurchaseOrder(
+                poId,
+                approvalData.approver,
+                approvalData.timestamp || Date.now()
+            );
+            
+            const receipt = await tx.wait();
+            
+            return {
+                success: true,
+                transactionHash: receipt.transactionHash,
+                blockNumber: receipt.blockNumber,
+                gasUsed: receipt.gasUsed.toString(),
+                poId
+            };
+        } catch (error) {
+            console.error('Blockchain PO approval failed:', error);
+            return {
+                success: false,
+                error: error.message,
+                poId
+            };
+        }
+    }
+
+    mockApprovePurchaseOrder(poId, approvalData) {
+        const transactionHash = this.generateMockTransactionHash();
+        console.log(`Mock: Approved purchase order ${poId} by ${approvalData.approver}`);
+        
+        return {
+            success: true,
+            transactionHash,
+            blockNumber: Math.floor(Math.random() * 1000000) + 18000000,
+            gasUsed: (Math.floor(Math.random() * 30000) + 21000).toString(),
+            poId
+        };
+    }
+
+    // Enhanced purchase order approval with fees
+    async approvePurchaseOrderWithFees(poId, approvalData, userRole, estimatedTransactionValue = 0.01) {
+        return await this.executeTransactionWithFees(
+            userRole,
+            estimatedTransactionValue,
+            this.approvePurchaseOrder,
+            poId,
+            approvalData
         );
     }
 

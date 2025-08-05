@@ -1,13 +1,63 @@
 # Transaction Fees Framework
 
-The ValveChain backend implements a comprehensive transaction fees framework for charging fees on blockchain transactions based on user roles. This framework provides accurate, modular, and extensible fee calculations.
+The ValveChain backend implements a comprehensive transaction fees framework for charging fees on blockchain transactions based on user roles. This framework provides accurate, modular, and extensible fee calculations with automatic fee collection to a designated wallet.
 
 ## Overview
 
-The transaction fees framework consists of two main components:
+The transaction fees framework consists of three main components:
 
 1. **TransactionFeeService** - Core fee calculation logic
 2. **Enhanced BlockchainService** - Integration with blockchain operations
+3. **Fee Wallet Collection** - Automatic transfer of collected fees to a designated wallet
+
+## Fee Collection Mechanism
+
+All collected transaction fees are automatically transferred to a designated fee wallet address after successful blockchain transactions. The fee collection is transparent and does not affect the net amount received by users.
+
+### Configuration
+
+The fee wallet address is configured through the `FEE_WALLET_ADDRESS` environment variable:
+
+```bash
+# .env file
+FEE_WALLET_ADDRESS=0xFEEWALLETADDRESS  # Replace with actual wallet address
+```
+
+### How It Works
+
+1. **Fee Calculation**: The system calculates the appropriate fee based on user role
+2. **Transaction Execution**: The main blockchain transaction is executed
+3. **Fee Transfer**: If the transaction succeeds, the calculated fee is automatically transferred to the designated fee wallet
+4. **Logging**: All fee transfers are logged for transparency and auditing
+
+### Fee Transfer Example
+
+```javascript
+// Example: Registering a distributor with automatic fee collection
+const result = await blockchainService.registerDistributorWithFees(
+    distributorData,
+    'distributor',  // User role
+    0.05           // Estimated transaction value in ETH
+);
+
+console.log(result);
+// Output includes fee transfer information:
+// {
+//   success: true,
+//   transactionHash: '0x123...',
+//   feeDetails: {
+//     feeAmount: 0.00005,           // Fee amount (0.10% for distributors)
+//     netAmount: 0.04995,           // Net amount (original - fee)
+//     feeWalletAddress: '0xFEEWALLETADDRESS'
+//   },
+//   feeTransfer: {
+//     success: true,
+//     feeAmount: 0.00005,
+//     feeWalletAddress: '0xFEEWALLETADDRESS',
+//     transactionHash: '0x456...'  // Separate transaction for fee transfer
+//   }
+// }
+```
 
 ## Fee Structure
 
@@ -53,7 +103,7 @@ console.log(feeResult);
 ```javascript
 const blockchainService = require('./blockchainService');
 
-// Register distributor with automatic fee calculation
+// Register distributor with automatic fee calculation and collection
 const result = await blockchainService.registerDistributorWithFees(
     distributorData,
     'admin',        // User role
@@ -68,7 +118,25 @@ console.log(result.feeDetails);
 //   netAmount: 0.05,
 //   feeBasisPoints: 0,
 //   feePercentage: '0.00%',
-//   userRole: 'admin'
+//   userRole: 'admin',
+//   feeWalletAddress: '0xFEEWALLETADDRESS'
+// }
+
+// Approve purchase order with fee collection
+const poResult = await blockchainService.approvePurchaseOrderWithFees(
+    'PO-001',
+    { approver: 'user123', timestamp: Date.now() },
+    'plant',       // User role
+    0.02          // Estimated transaction value in ETH
+);
+
+console.log(poResult.feeTransfer);
+// Output:
+// {
+//   success: true,
+//   feeAmount: 0.00008,
+//   feeWalletAddress: '0xFEEWALLETADDRESS',
+//   transactionHash: '0x456...'
 // }
 ```
 
@@ -139,9 +207,71 @@ Revoke distributor rights with fee calculation.
 
 Transfer valve ownership with fee calculation.
 
+#### `approvePurchaseOrderWithFees(poId, approvalData, userRole, estimatedTransactionValue)`
+
+Approve purchase order with automatic fee calculation and collection.
+
+**Parameters:**
+- `poId` (string): Purchase order ID
+- `approvalData` (object): Approval data containing approver and timestamp
+- `userRole` (string): Role of the user approving the PO
+- `estimatedTransactionValue` (number): Estimated transaction value in ETH
+
 #### `getTransactionFeeEstimate(userRole, transactionType, estimatedValue)`
 
 Get fee estimate for a transaction without executing it.
+
+#### `transferFeeToWallet(feeAmount, transactionType, userRole)`
+
+Transfer collected fee to the designated fee wallet.
+
+**Parameters:**
+- `feeAmount` (number): Amount of fee to transfer in ETH
+- `transactionType` (string): Type of transaction for logging
+- `userRole` (string): User role for context
+
+**Returns:**
+- Object with transfer result including transaction hash and wallet address
+
+## Fee Wallet Configuration
+
+### Environment Configuration
+
+Configure the designated fee wallet in your `.env` file:
+
+```bash
+# Fee wallet configuration
+FEE_WALLET_ADDRESS=0xYourFeeWalletAddress  # Replace with actual wallet address
+```
+
+### Automatic Fee Collection
+
+All blockchain transactions that collect fees automatically transfer the fee portion to the designated wallet:
+
+1. **No User Impact**: Users only pay the net amount; fee collection is transparent
+2. **Separate Transactions**: Fee transfers are separate blockchain transactions
+3. **Audit Trail**: All fee transfers are logged with transaction hashes
+4. **Error Handling**: Failed fee transfers don't affect the main transaction
+
+### Fee Collection Flow
+
+```
+User Transaction (e.g., 0.05 ETH with 0.10% fee for distributor)
+├── Calculate Fee: 0.00005 ETH
+├── Execute Main Transaction: Success
+├── Transfer Fee to Wallet: 0.00005 ETH → 0xFEEWALLETADDRESS  
+└── Net User Payment: 0.04995 ETH
+```
+
+### Monitoring Fee Collection
+
+Monitor fee collection through transaction logs:
+
+```javascript
+// Example of fee transfer logging
+console.log(`Fee transfer successful: ${feeAmount} ETH to ${feeWalletAddress}`);
+// Output: Fee transfer successful: 0.00005 ETH to 0xFEEWALLETADDRESS
+```
 
 ## Role Mapping
 
@@ -225,14 +355,18 @@ npm run test -- __tests__/blockchainService.test.js
 
 ## Integration Examples
 
-### Purchase Order with Fees
+### Purchase Order Approval with Fee Collection
 
 ```javascript
 // In your PO controller
 const poResult = await createPurchaseOrder(poData);
 if (poResult.success && poData.blockchainEnabled) {
-    const blockchainResult = await blockchainService.registerPurchaseOrderWithFees(
-        poData,
+    const blockchainResult = await blockchainService.approvePurchaseOrderWithFees(
+        poData.id,
+        { 
+            approver: req.user.id, 
+            timestamp: Date.now() 
+        },
         req.user.role,
         poData.total_amount * 0.01 // 1% of PO value as transaction estimate
     );
@@ -240,6 +374,33 @@ if (poResult.success && poData.blockchainEnabled) {
     if (blockchainResult.success) {
         poResult.blockchainHash = blockchainResult.transactionHash;
         poResult.transactionFees = blockchainResult.feeDetails;
+        poResult.feeCollection = blockchainResult.feeTransfer;
+        
+        // Log fee collection for audit
+        console.log(`Fee collected: ${blockchainResult.feeDetails.feeAmount} ETH to ${blockchainResult.feeDetails.feeWalletAddress}`);
+    }
+}
+```
+
+### Distributor Registration with Fee Collection
+
+```javascript
+// During distributor registration, fees are automatically collected
+const registrationResult = await blockchainService.registerDistributorWithFees(
+    distributorData,
+    req.user.role,
+    0.02 // Standard registration transaction value
+);
+
+if (registrationResult.success) {
+    // Main transaction succeeded
+    console.log('Distributor registered:', registrationResult.transactionHash);
+    
+    // Fee collection details
+    if (registrationResult.feeTransfer && registrationResult.feeTransfer.success) {
+        console.log('Fee collected:', registrationResult.feeTransfer.feeAmount, 'ETH');
+        console.log('Fee wallet:', registrationResult.feeTransfer.feeWalletAddress);
+        console.log('Fee transfer hash:', registrationResult.feeTransfer.transactionHash);
     }
 }
 ```
