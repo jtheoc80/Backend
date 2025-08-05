@@ -55,14 +55,14 @@ router.post('/request_password_reset', validateEmail, authRateLimit, async (req,
         
         // Check if user exists
         const user = userModel.findUserByEmail(email);
-        if (!user) {
-            // Don't reveal if user exists or not for security
-            return res.json({ message: 'If the email exists, a password reset link has been sent.' });
+        let token;
+        if (user) {
+            token = crypto.randomBytes(32).toString('hex');
+            await userModel.saveResetToken(email, token, 15); // 15 minutes expiry
+        } else {
+            // Generate a fake token for timing consistency
+            token = crypto.randomBytes(32).toString('hex');
         }
-
-        const token = crypto.randomBytes(32).toString('hex');
-        await userModel.saveResetToken(email, token, 15); // 15 minutes expiry
-
         await sendResetEmail(email, token);
         res.json({ message: 'If the email exists, a password reset link has been sent.' });
     } catch (error) {
