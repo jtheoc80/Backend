@@ -153,9 +153,52 @@ const initDatabase = async () => {
             FOREIGN KEY (valve_id) REFERENCES valves(id)
         )`);
 
+        // Valve returns table for tracking return requests
+        await run(`CREATE TABLE IF NOT EXISTS valve_returns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            valve_id INTEGER NOT NULL,
+            return_type VARCHAR(20) NOT NULL CHECK (return_type IN ('damaged', 'not_operable', 'custom', 'not_resellable', 'resellable')),
+            returned_by_id VARCHAR(50) NOT NULL,
+            returned_by_type VARCHAR(20) NOT NULL CHECK (returned_by_type IN ('manufacturer', 'distributor')),
+            return_reason TEXT NOT NULL,
+            return_fee DECIMAL(10,2) DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved_for_burn', 'approved_for_restore', 'rejected', 'completed')),
+            approved_by INTEGER,
+            approved_at DATETIME,
+            completed_at DATETIME,
+            blockchain_transaction_hash VARCHAR(66),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (valve_id) REFERENCES valves(id),
+            FOREIGN KEY (approved_by) REFERENCES users(id)
+        )`);
+
+        // Transaction fees table for tracking fee payments
+        await run(`CREATE TABLE IF NOT EXISTS transaction_fees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_type VARCHAR(50) NOT NULL,
+            transaction_id VARCHAR(100) NOT NULL,
+            user_id INTEGER,
+            user_role VARCHAR(20),
+            transaction_amount DECIMAL(10,4) NOT NULL,
+            fee_rate DECIMAL(5,4) NOT NULL,
+            fee_amount DECIMAL(10,4) NOT NULL,
+            fee_wallet_address VARCHAR(42) NOT NULL,
+            blockchain_transaction_hash VARCHAR(66),
+            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )`);
+
         // Add columns to valves table for ownership tracking
         await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
         await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
+        
+        // Add columns for burn/return status
+        await run(`ALTER TABLE valves ADD COLUMN is_burned BOOLEAN DEFAULT 0`).catch(() => {});
+        await run(`ALTER TABLE valves ADD COLUMN burn_reason TEXT`).catch(() => {});
+        await run(`ALTER TABLE valves ADD COLUMN burned_at DATETIME`).catch(() => {});
+        await run(`ALTER TABLE valves ADD COLUMN burned_by INTEGER`).catch(() => {});
 
         // Purchase Orders table
         await run(`CREATE TABLE IF NOT EXISTS purchase_orders (
