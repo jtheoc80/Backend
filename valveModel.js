@@ -417,7 +417,13 @@ class Valve {
         return `${prefix}-${tokenId}`;
     }
 
-    // Generate mock transaction hash
+    /**
+     * Generates a mock blockchain transaction hash.
+     * 
+     * NOTE: This method is intended for testing and development purposes only.
+     * In production, replace this with actual blockchain integration to obtain
+     * real transaction hashes.
+     */
     static generateTransactionHash() {
         // Use cryptographically secure random bytes for transaction hash
         return '0x' + crypto.randomBytes(32).toString('hex');
