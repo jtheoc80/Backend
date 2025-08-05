@@ -258,6 +258,63 @@ class BlockchainService {
             };
         }
     }
+
+    // Deactivate user records on blockchain (for profile deletion)
+    async deactivateUserRecords(userData) {
+        if (this.mockMode) {
+            return this.mockDeactivateUserRecords(userData);
+        }
+
+        try {
+            // In a real blockchain implementation, this would:
+            // 1. Revoke all manufacturer rights
+            // 2. Revoke all distributor rights  
+            // 3. Transfer any owned valves to a system account
+            // 4. Update user status to deactivated
+            
+            const tx = await this.contract.deactivateUserRecords(
+                userData.userId,
+                userData.manufacturerIds || [],
+                userData.distributorIds || []
+            );
+            
+            const receipt = await tx.wait();
+            
+            return {
+                success: true,
+                transactionHash: receipt.transactionHash,
+                blockNumber: receipt.blockNumber,
+                gasUsed: receipt.gasUsed.toString()
+            };
+        } catch (error) {
+            console.error('Blockchain user record deactivation failed:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Mock deactivate user records
+    mockDeactivateUserRecords(userData) {
+        const transactionHash = this.generateMockTransactionHash();
+        console.log(`Mock: Deactivated blockchain records for user ${userData.userId} (${userData.username})`);
+        
+        if (userData.manufacturerIds && userData.manufacturerIds.length > 0) {
+            console.log(`Mock: Revoked manufacturer rights for: ${userData.manufacturerIds.join(', ')}`);
+        }
+        
+        if (userData.distributorIds && userData.distributorIds.length > 0) {
+            console.log(`Mock: Revoked distributor rights for: ${userData.distributorIds.join(', ')}`);
+        }
+        
+        return {
+            success: true,
+            transactionHash,
+            blockNumber: Math.floor(Math.random() * 1000000) + 18000000,
+            gasUsed: (Math.floor(Math.random() * 50000) + 21000).toString()
+        };
+    }
 }
 
 // Singleton instance

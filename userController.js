@@ -3,6 +3,7 @@ const { generateToken } = require('./authMiddleware');
 const { sendEmail } = require('./emailUtils');
 const logActivity = require('./logActivity');
 const { db } = require('./database');
+const blockchainService = require('./blockchainService');
 const crypto = require('crypto');
 
 // Register new user
@@ -544,6 +545,202 @@ const generateTestToken = async (req, res) => {
     }
 };
 
+// Request profile deletion (self-service)
+const requestProfileDeletion = async (req, res) => {
+    try {
+        const { confirmationPassword } = req.body;
+
+        // Require password confirmation for security
+        if (!confirmationPassword) {
+            return res.status(400).json({
+                error: 'Password confirmation is required to delete your profile.'
+            });
+        }
+
+        // Verify current password
+        const isPasswordValid = await req.user.verifyPassword(confirmationPassword);
+        if (!isPasswordValid) {
+            await logActivity(db, req.user.id, 'USER_DELETE_REQUEST', { 
+                reason: 'Invalid password confirmation' 
+            }, 'failure');
+            return res.status(401).json({
+                error: 'Password confirmation is incorrect.'
+            });
+        }
+
+        // Generate deletion confirmation token
+        const deletionToken = crypto.randomBytes(32).toString('hex');
+        await req.user.setDeletionToken(deletionToken);
+
+        // Send confirmation email (in production, this should be properly configured)
+        try {
+            const confirmationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/confirm-deletion?token=${deletionToken}`;
+            await sendEmail(
+                req.user.email,
+                'Profile Deletion Confirmation',
+                `You have requested to delete your profile. This action cannot be undone.\n\nTo confirm deletion, click here: ${confirmationUrl}\n\nIf you did not request this, please ignore this email and change your password immediately.`
+            );
+        } catch (emailError) {
+            console.error('Failed to send deletion confirmation email:', emailError);
+            // Continue anyway - user can still use API endpoint with token
+        }
+
+        // Log activity
+        await logActivity(db, req.user.id, 'USER_DELETE_REQUEST', { 
+            email: req.user.email,
+            confirmationToken: deletionToken 
+        }, 'success');
+
+        res.json({
+            message: 'Profile deletion request submitted. Please check your email for confirmation instructions.',
+            confirmationToken: deletionToken,
+            instructions: 'Use the confirmation token with the DELETE /api/auth/profile/delete endpoint to complete deletion, or click the link in your email.'
+        });
+    } catch (error) {
+        console.error('Request profile deletion error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_DELETE_REQUEST', { 
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to process profile deletion request.'
+        });
+    }
+};
+
+// Confirm and execute profile deletion
+const confirmProfileDeletion = async (req, res) => {
+    try {
+        const { confirmationToken } = req.body;
+
+        if (!confirmationToken) {
+            return res.status(400).json({
+                error: 'Confirmation token is required to complete profile deletion.'
+            });
+        }
+
+        // Verify deletion token
+        const isValidToken = await req.user.verifyDeletionToken(confirmationToken);
+        if (!isValidToken) {
+            await logActivity(db, req.user.id, 'USER_DELETE_CONFIRM', { 
+                reason: 'Invalid or expired deletion token' 
+            }, 'failure');
+            return res.status(400).json({
+                error: 'Invalid or expired deletion confirmation token.'
+            });
+        }
+
+        // Perform secure data cleanup
+        await performSecureUserDataCleanup(req.user);
+
+        // Log successful deletion before actually deleting the user
+        await logActivity(db, req.user.id, 'USER_DELETE_SELF', { 
+            username: req.user.username,
+            email: req.user.email,
+            deletedAt: new Date().toISOString()
+        }, 'success');
+
+        // Delete the user from database (this will cascade to related data)
+        await req.user.delete();
+
+        res.json({
+            message: 'Profile deleted successfully. All associated data has been removed.'
+        });
+    } catch (error) {
+        console.error('Confirm profile deletion error:', error);
+        
+        // Log failed activity
+        await logActivity(db, req.user.id, 'USER_DELETE_CONFIRM', { 
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to complete profile deletion.'
+        });
+    }
+};
+
+// Helper function to perform secure user data cleanup
+const performSecureUserDataCleanup = async (user) => {
+    try {
+        // Clean up blockchain records if user has any associated data
+        await cleanupBlockchainRecords(user);
+        
+        // Clean up related database records
+        await cleanupRelatedData(user);
+
+        console.log(`Secure data cleanup completed for user ${user.id}`);
+    } catch (error) {
+        console.error('Error during secure data cleanup:', error);
+        throw error;
+    }
+};
+
+// Helper function to cleanup blockchain records
+const cleanupBlockchainRecords = async (user) => {
+    try {
+        // Check if user has any manufacturer or distributor records
+        const manufacturerRecords = await db.query(
+            'SELECT id FROM manufacturers WHERE id = ? OR wallet_address = ?', 
+            [user.username, user.email]
+        );
+        
+        const distributorRecords = await db.query(
+            'SELECT id FROM distributors WHERE id = ? OR contact_email = ?', 
+            [user.username, user.email]
+        );
+
+        // Update blockchain if user had manufacturer/distributor roles
+        if (manufacturerRecords.length > 0 || distributorRecords.length > 0) {
+            try {
+                await blockchainService.deactivateUserRecords({
+                    userId: user.id,
+                    username: user.username,
+                    email: user.email,
+                    manufacturerIds: manufacturerRecords.map(r => r.id),
+                    distributorIds: distributorRecords.map(r => r.id)
+                });
+            } catch (blockchainError) {
+                console.warn('Blockchain cleanup failed (continuing with deletion):', blockchainError);
+                // Don't fail the deletion if blockchain cleanup fails
+            }
+        }
+    } catch (error) {
+        console.error('Error during blockchain cleanup:', error);
+        // Don't throw - blockchain cleanup is not critical for user deletion
+    }
+};
+
+// Helper function to cleanup related data
+const cleanupRelatedData = async (user) => {
+    try {
+        // Deactivate any manufacturer records associated with this user
+        await db.run(
+            'UPDATE manufacturers SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR wallet_address = ?',
+            [user.username, user.email]
+        );
+
+        // Deactivate any distributor records associated with this user  
+        await db.run(
+            'UPDATE distributors SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR contact_email = ?',
+            [user.username, user.email]
+        );
+
+        // Deactivate any manufacturer-distributor relationships
+        await db.run(
+            'UPDATE manufacturer_distributor_relationships SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE manufacturer_id = ? OR distributor_id = ?',
+            [user.username, user.username]
+        );
+
+        console.log(`Related data cleanup completed for user ${user.id}`);
+    } catch (error) {
+        console.error('Error during related data cleanup:', error);
+        throw error;
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -556,5 +753,7 @@ module.exports = {
     deleteUserById,
     requestPasswordReset,
     resetPassword,
-    generateTestToken
+    generateTestToken,
+    requestProfileDeletion,
+    confirmProfileDeletion
 };
