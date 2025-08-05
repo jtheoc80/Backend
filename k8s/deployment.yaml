@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valvechain-backend
+  namespace: valvechain
+  labels:
+    app: valvechain-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: valvechain-backend
+  template:
+    metadata:
+      labels:
+        app: valvechain-backend
+    spec:
+      containers:
+      - name: valvechain-backend
+        image: valvechain/backend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: valvechain-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: valvechain-config
+              key: PORT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: valvechain-config
+              key: LOG_LEVEL
+        - name: PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: PRIVATE_KEY
+        - name: RPC_URL
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: RPC_URL
+        - name: CONTRACT_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: CONTRACT_ADDRESS
+        - name: PO_CONTRACT_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: PO_CONTRACT_ADDRESS
+        - name: FEE_WALLET_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: FEE_WALLET_ADDRESS
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: JWT_SECRET
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: valvechain-data-pvc

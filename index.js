@@ -5,18 +5,49 @@ const manufacturerRoutes = require('./manufacturerRoutes');
 const distributorRoutes = require('./distributorRoutes');
 const poRoutes = require('./poRoutes');
 const blockchainService = require('./blockchainService');
+const logger = require('./logger');
+const { requestLogger, errorHandler, notFoundHandler } = require('./middleware');
+const { metricsMiddleware, healthCheckWithMetrics } = require('./metrics');
+
+// Load environment variables
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+
+// Request logging and metrics middleware
+app.use(requestLogger);
+app.use(metricsMiddleware);
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const PORT = process.env.PORT || 3000;
 
 // Initialize blockchain service
-blockchainService.initialize();
+try {
+  blockchainService.initialize();
+  logger.info('Blockchain service initialized successfully');
+} catch (error) {
+  logger.error('Failed to initialize blockchain service', { error: error.message });
+}
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ValveChain Sidecar API with User Management, Manufacturer Tokenization, and Distributor Management running' });
+// Enhanced health check endpoint with metrics
+app.get('/api/health', healthCheckWithMetrics);
+
+// Ready check endpoint for Kubernetes
+app.get('/api/ready', (req, res) => {
+  // Add any readiness checks here (database connection, etc.)
+  res.json({ 
+    status: 'Ready',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Metrics endpoint
+app.get('/api/metrics', (req, res) => {
+  const { metricsCollector } = require('./metrics');
+  res.json(metricsCollector.getMetrics());
 });
 
 // Add user management routes
@@ -53,9 +84,29 @@ app.post('/api/repair', async (req, res) => {
   res.json({ message: 'ValveChain integration temporarily disabled. User management is active.' });
 });
 
+// Add error handling and 404 middleware
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`ValveChain Sidecar API running on port ${PORT}`);
+  logger.info(`ValveChain Sidecar API running on port ${PORT}`, {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+  
   console.log('User management endpoints available:');
   console.log('  POST /api/auth/register');
   console.log('  POST /api/auth/login');
