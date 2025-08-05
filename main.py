@@ -39,7 +39,7 @@ async def register_vendor(
                 "message": error.get("msg", "Validation error"),
                 "type": error.get("type", "value_error")
             })
-        raise HTTPException(status_code=422, detail=errors)
+        raise HTTPException(status_code=400, detail=errors)
 
     # Check if the uploaded file is a PDF
     if msa_file.content_type != "application/pdf":
