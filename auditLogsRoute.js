@@ -17,4 +17,4 @@ router.get('/audit_logs', checkAdmin, async (req, res) => {
             LIMIT $5 OFFSET $6
         `;
 
-        const logs = await db.query(query, [user, action, startDate, endDate, limit, ...
+        const logs = await db.query(query, [user, action, startDate, endDate, limit, offset]);
