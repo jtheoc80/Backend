@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: valvechain-backend-service
+  namespace: valvechain
+  labels:
+    app: valvechain-backend
+spec:
+  selector:
+    app: valvechain-backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valvechain-python-service
+  namespace: valvechain
+  labels:
+    app: valvechain-python
+spec:
+  selector:
+    app: valvechain-python
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP

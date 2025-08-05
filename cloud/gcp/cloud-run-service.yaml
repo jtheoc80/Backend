@@ -1,0 +1,75 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: valvechain-backend
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/execution-environment: gen2
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "100"
+        autoscaling.knative.dev/minScale: "1"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/memory: "512Mi"
+        run.googleapis.com/cpu: "1000m"
+    spec:
+      containerConcurrency: 100
+      timeoutSeconds: 300
+      containers:
+      - image: gcr.io/PROJECT_ID/valvechain-backend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: PRIVATE_KEY
+        - name: RPC_URL
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: RPC_URL
+        - name: CONTRACT_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: CONTRACT_ADDRESS
+        - name: PO_CONTRACT_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: PO_CONTRACT_ADDRESS
+        - name: FEE_WALLET_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: FEE_WALLET_ADDRESS
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: JWT_SECRET
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5

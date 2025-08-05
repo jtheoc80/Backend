@@ -1,4 +1,5 @@
 node_modules/
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -6,3 +7,70 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Database files
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Coverage directory used by jest
+coverage/
+
+# Cloud credentials and configs
+*.pem
+*.key
+service-account.json
+.gcp/
+.aws/
+.azure/
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+terraform.tfvars
+
+# Kubernetes secrets
+*-secret.yaml
+secrets/
+
+# Docker
+.docker/
+
+# Uploads
+uploads/
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

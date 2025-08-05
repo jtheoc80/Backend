@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: valvechain-config
+  namespace: valvechain
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  ENABLE_METRICS: "true"
+  DB_PATH: "/app/data/users.db"
+  # Add non-sensitive configuration here

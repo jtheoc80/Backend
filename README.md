@@ -11,6 +11,46 @@ A Node.js/Express backend API for managing purchase orders, manufacturers, distr
 - **Valve Tokenization**: Blockchain-based valve tracking
 - **Audit Logging**: Comprehensive activity tracking
 - **Territory Management**: Geographical distribution control
+- **Cloud Ready**: Containerized with deployment configs for AWS, Azure, GCP, and Kubernetes
+- **Production Ready**: Enhanced logging, error handling, and monitoring
+
+## Quick Start
+
+### Local Development
+
+1. **Clone and install**:
+   ```bash
+   git clone <repository-url>
+   cd Backend
+   npm install
+   ```
+
+2. **Configure environment**:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual values
+   ```
+
+3. **Run the application**:
+   ```bash
+   npm start
+   ```
+
+4. **Run with Docker**:
+   ```bash
+   docker-compose up
+   ```
+
+### Cloud Deployment
+
+This application is cloud-ready with deployment configurations for:
+
+- **AWS** (ECS Fargate with Terraform)
+- **Azure** (Container Apps with ARM templates)
+- **Google Cloud** (Cloud Run with deployment scripts)
+- **Kubernetes** (Complete manifests for any K8s cluster)
+
+📖 **[See detailed cloud deployment guide](CLOUD_DEPLOYMENT.md)**
 
 ## Purchase Order Workflow
 
