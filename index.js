@@ -4,6 +4,7 @@ const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
 const distributorRoutes = require('./distributorRoutes');
 const poRoutes = require('./poRoutes');
+const valveGPTRoutes = require('./routes/valveGPT');
 const blockchainService = require('./blockchainService');
 
 const app = express();
@@ -31,6 +32,16 @@ app.use('/api', distributorRoutes);
 
 // Add purchase order routes
 app.use('/api', poRoutes);
+
+// Add ValveGPT routes
+app.use('/api', valveGPTRoutes);
+console.log('ValveGPT routes registered successfully');
+
+// Debug middleware to catch all requests
+app.use('/api', (req, res, next) => {
+    console.log('Unmatched API request:', req.method, req.path, req.url);
+    next();
+});
 
 // Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {
@@ -97,4 +108,7 @@ app.listen(PORT, () => {
   console.log('  PUT /api/pos/:id');
   console.log('  POST /api/pos/:id/approve');
   console.log('  POST /api/pos/:id/reject');
+  console.log('');
+  console.log('ValveGPT endpoints available:');
+  console.log('  POST /api/valvegpt/query');
 });

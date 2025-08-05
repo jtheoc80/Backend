@@ -9,14 +9,16 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@pinecone-database/pinecone": "^6.1.2",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.1",
     "ethers": "^6.15.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.5",
-    "sqlite3": "^5.1.7",
-    "express-rate-limit": "^8.0.1"
+    "openai": "^5.12.0",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "jest": "^29.7.0",

@@ -237,6 +237,15 @@ const initDatabase = async () => {
             FOREIGN KEY (approved_by) REFERENCES users(id)
         )`);
 
+        // ValveGPT interactions table
+        await run(`CREATE TABLE IF NOT EXISTS valve_gpt_interactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question TEXT NOT NULL,
+            context TEXT,
+            answer TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         // Insert sample manufacturer data if not exists
         await run(`INSERT OR IGNORE INTO manufacturers (id, name, wallet_address, permissions) VALUES 
             ('mfg001', 'Emerson Process Management', '0x742d35Cc6436C0532925a3b8D0000a5492d95a8b', 'tokenize_valves,read_inventory,manage_distributors'),
