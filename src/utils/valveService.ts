@@ -122,7 +122,7 @@ export class ValveService {
     }
   }
 
-  static async scheduleMaintenace(valveId: string, maintenanceDate: string): Promise<void> {
+  static async scheduleMaintenance(valveId: string, maintenanceDate: string): Promise<void> {
     try {
       const response = await fetch(`${API_BASE_URL}/maintenance`, {
         method: 'POST',
