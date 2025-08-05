@@ -26,6 +26,10 @@ router.get('/profile', generalRateLimit, verifyToken, userController.getProfile)
 router.put('/profile', generalRateLimit, verifyToken, userController.updateProfile);
 router.put('/change-password', generalRateLimit, verifyToken, userController.changePassword);
 
+// Profile deletion routes (require authentication)
+router.post('/profile/delete-request', generalRateLimit, verifyToken, userController.requestProfileDeletion);
+router.delete('/profile/delete', generalRateLimit, verifyToken, userController.confirmProfileDeletion);
+
 // Admin routes
 router.get('/users', generalRateLimit, verifyToken, requireAdmin, userController.getAllUsers);
 router.get('/users/:id', generalRateLimit, verifyToken, requireAdminOrOwner, userController.getUserById);

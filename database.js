@@ -44,7 +44,9 @@ const initDatabase = async () => {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             is_verified BOOLEAN DEFAULT 0,
             reset_token VARCHAR(255),
-            reset_token_expires DATETIME
+            reset_token_expires DATETIME,
+            deletion_token VARCHAR(255),
+            deletion_token_expires DATETIME
         )`);
 
         // Audit logs table  
@@ -156,6 +158,10 @@ const initDatabase = async () => {
         // Add columns to valves table for ownership tracking
         await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
         await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
+
+        // Add deletion token columns to users table if they don't exist
+        await run(`ALTER TABLE users ADD COLUMN deletion_token VARCHAR(255)`).catch(() => {});
+        await run(`ALTER TABLE users ADD COLUMN deletion_token_expires DATETIME`).catch(() => {});
 
         // Insert sample manufacturer data if not exists
         await run(`INSERT OR IGNORE INTO manufacturers (id, name, wallet_address, permissions) VALUES 

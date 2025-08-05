@@ -13,6 +13,8 @@ class User {
         this.is_verified = data.is_verified || 0;
         this.reset_token = data.reset_token;
         this.reset_token_expires = data.reset_token_expires;
+        this.deletion_token = data.deletion_token;
+        this.deletion_token_expires = data.deletion_token_expires;
     }
 
     // Create a new user
@@ -163,9 +165,42 @@ class User {
         return new User(rows[0]);
     }
 
-    // JSON representation (without password)
+    // Set deletion token
+    async setDeletionToken(token, expiresIn = 3600000) { // 1 hour default
+        const expiryDate = new Date(Date.now() + expiresIn);
+        const sql = `UPDATE users SET deletion_token = ?, deletion_token_expires = ? WHERE id = ?`;
+        await db.run(sql, [token, expiryDate.toISOString(), this.id]);
+        
+        this.deletion_token = token;
+        this.deletion_token_expires = expiryDate.toISOString();
+        return this;
+    }
+
+    // Verify deletion token
+    async verifyDeletionToken(token) {
+        if (!this.deletion_token || !this.deletion_token_expires) {
+            return false;
+        }
+        
+        const now = new Date();
+        const expiryDate = new Date(this.deletion_token_expires);
+        
+        return this.deletion_token === token && now < expiryDate;
+    }
+
+    // Clear deletion token
+    async clearDeletionToken() {
+        const sql = `UPDATE users SET deletion_token = NULL, deletion_token_expires = NULL WHERE id = ?`;
+        await db.run(sql, [this.id]);
+        
+        this.deletion_token = null;
+        this.deletion_token_expires = null;
+        return this;
+    }
+
+    // JSON representation (without password and sensitive tokens)
     toJSON() {
-        const { password, reset_token, reset_token_expires, ...userWithoutSensitiveData } = this;
+        const { password, reset_token, reset_token_expires, deletion_token, deletion_token_expires, ...userWithoutSensitiveData } = this;
         return userWithoutSensitiveData;
     }
 }

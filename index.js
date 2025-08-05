@@ -59,6 +59,8 @@ app.listen(PORT, () => {
   console.log('  GET /api/auth/profile');
   console.log('  PUT /api/auth/profile');
   console.log('  PUT /api/auth/change-password');
+  console.log('  POST /api/auth/profile/delete-request (self-service deletion request)');
+  console.log('  DELETE /api/auth/profile/delete (confirm and execute deletion)');
   console.log('  GET /api/auth/users (admin only)');
   console.log('  GET /api/audit_logs (admin only)');
   console.log('');
