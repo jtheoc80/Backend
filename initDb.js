@@ -18,14 +18,16 @@ async function initializeDatabase() {
         await db.query(createTableQuery);
         console.log('✅ audit_logs table created successfully');
 
-        // Create index for better query performance
-        const createIndexQuery = `
-            CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
-            CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
-            CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
-        `;
+        // Create indexes for better query performance
+        const indexQueries = [
+            'CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);',
+            'CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);',
+            'CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);'
+        ];
 
-        await db.query(createIndexQuery);
+        for (const query of indexQueries) {
+            await db.query(query);
+        }
         console.log('✅ Database indexes created successfully');
 
         console.log('🎉 Database initialization completed');
