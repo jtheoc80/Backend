@@ -1,0 +1,190 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valvechain-api
+  namespace: valvechain
+  labels:
+    app: valvechain-api
+    component: backend
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: valvechain-api
+  template:
+    metadata:
+      labels:
+        app: valvechain-api
+        component: backend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: valvechain-api
+        image: valvechain/api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: jwt-secret
+        - name: DB_PATH
+          value: "/data/valvechain.db"
+        - name: METRICS_ENABLED
+          value: "true"
+        - name: HEALTH_CHECK_ENABLED
+          value: "true"
+        - name: CPU_SCALE_UP_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: cpu-scale-up-threshold
+        - name: CPU_SCALE_DOWN_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: cpu-scale-down-threshold
+        - name: RPS_SCALE_UP_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: rps-scale-up-threshold
+        - name: RPS_SCALE_DOWN_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: rps-scale-down-threshold
+        - name: REDIS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: redis-enabled
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: autoscaling-config
+              key: redis-port
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1001
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: valvechain-data
+      securityContext:
+        fsGroup: 1001
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valvechain-api-service
+  namespace: valvechain
+  labels:
+    app: valvechain-api
+spec:
+  selector:
+    app: valvechain-api
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autoscaling-config
+  namespace: valvechain
+data:
+  cpu-scale-up-threshold: "70"
+  cpu-scale-down-threshold: "30"
+  rps-scale-up-threshold: "100"
+  rps-scale-down-threshold: "20"
+  min-instances: "1"
+  max-instances: "10"
+  cooldown-period: "300"
+  redis-enabled: "false"
+  redis-host: "redis-service"
+  redis-port: "6379"
+  global-rate-max: "1000"
+  auth-rate-max: "5"
+  circuit-breaker-timeout: "3000"
+  circuit-breaker-error-threshold: "50"
+  regional-rate-limiting: "false"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: valvechain-secrets
+  namespace: valvechain
+type: Opaque
+data:
+  jwt-secret: "" # Base64 encoded JWT secret - must be provided
+  redis-password: "" # Base64 encoded Redis password if needed
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: valvechain-data
+  namespace: valvechain
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard

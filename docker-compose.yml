@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  # Main API service
+  valvechain-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: valvechain-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - JWT_SECRET=dev-secret-key-change-in-production
+      - DB_PATH=/data/valvechain.db
+      - METRICS_ENABLED=true
+      - HEALTH_CHECK_ENABLED=true
+      - REDIS_ENABLED=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CPU_SCALE_UP_THRESHOLD=70
+      - CPU_SCALE_DOWN_THRESHOLD=30
+      - RPS_SCALE_UP_THRESHOLD=50
+      - RPS_SCALE_DOWN_THRESHOLD=10
+      - GLOBAL_RATE_MAX=1000
+      - AUTH_RATE_MAX=10
+      - CIRCUIT_BREAKERS=true
+      - CB_TIMEOUT=3000
+      - CB_ERROR_THRESHOLD=50
+    volumes:
+      - ./data:/data
+      - .:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - valvechain-network
+
+  # Redis for rate limiting and caching
+  redis:
+    image: redis:7-alpine
+    container_name: valvechain-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - valvechain-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: valvechain-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - valvechain-network
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: valvechain-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - valvechain-network
+
+  # Load balancer for testing autoscaling
+  nginx:
+    image: nginx:alpine
+    container_name: valvechain-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - valvechain-api
+    restart: unless-stopped
+    networks:
+      - valvechain-network
+
+  # Load testing tool
+  locust:
+    image: locustio/locust
+    container_name: valvechain-locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./tests/load:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --host=http://nginx
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    networks:
+      - valvechain-network
+
+volumes:
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  valvechain-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

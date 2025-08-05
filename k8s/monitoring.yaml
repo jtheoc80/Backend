@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: valvechain-api-monitor
+  namespace: valvechain
+  labels:
+    app: valvechain-api
+spec:
+  selector:
+    matchLabels:
+      app: valvechain-api
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: valvechain-api-network-policy
+  namespace: valvechain
+spec:
+  podSelector:
+    matchLabels:
+      app: valvechain-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: valvechain
+    ports:
+    - protocol: TCP
+      port: 6379  # Redis
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53   # DNS
+    - protocol: UDP
+      port: 53   # DNS
+    - protocol: TCP
+      port: 443  # HTTPS
+    - protocol: TCP
+      port: 80   # HTTP
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: valvechain
+  labels:
+    name: valvechain
+    monitoring: enabled
