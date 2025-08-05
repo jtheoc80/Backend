@@ -1,8 +1,11 @@
 const jwt = require('jsonwebtoken');
 const { db } = require('./database');
 
-// JWT secret (should be in environment variables)
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+// JWT secret (must be set in environment variables)
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable must be set');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
