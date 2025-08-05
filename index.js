@@ -30,18 +30,11 @@ app.use('/api', manufacturerRoutes);
 // Add distributor management routes
 app.use('/api', distributorRoutes);
 
+// Add ValveGPT routes - must be before PO routes to avoid auth conflict
+app.use('/api', valveGPTRoutes);
+
 // Add purchase order routes
 app.use('/api', poRoutes);
-
-// Add ValveGPT routes
-app.use('/api', valveGPTRoutes);
-console.log('ValveGPT routes registered successfully');
-
-// Debug middleware to catch all requests
-app.use('/api', (req, res, next) => {
-    console.log('Unmatched API request:', req.method, req.path, req.url);
-    next();
-});
 
 // Placeholder ValveChain endpoints (blockchain integration disabled for now)
 app.post('/api/register-valve', async (req, res) => {
