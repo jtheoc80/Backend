@@ -366,10 +366,10 @@
             
             if (requiredConsents.length === 0) {
                 statusDiv.className = 'compliance-status compliant';
-                statusDiv.innerHTML = `✅ Your privacy settings are compliant with ${region} regulations`;
+                statusDiv.textContent = `✅ Your privacy settings are compliant with ${region} regulations`;
             } else {
                 statusDiv.className = 'compliance-status non-compliant';
-                statusDiv.innerHTML = `⚠️ Missing required consents for ${region} compliance: ${requiredConsents.map(c => c.name).join(', ')}`;
+                statusDiv.textContent = `⚠️ Missing required consents for ${region} compliance: ${requiredConsents.map(c => c.name).join(', ')}`;
             }
         }
 
