@@ -87,12 +87,27 @@ class DataPrivacy {
             userData.data.dataRequests = dataRequests;
 
             // Valve-related data (if user is a manufacturer or has valve records)
-            const valveData = await db.query(
-                'SELECT v.* FROM valves v JOIN manufacturers m ON v.manufacturer_id = m.id WHERE m.wallet_address IN (SELECT DISTINCT ip_address FROM user_consent WHERE user_id = ?) OR v.current_owner_id = ?',
-                [userId, userId.toString()]
+            // Query 1: Valves where manufacturer wallet address matches user consent IP
+            const valvesByManufacturer = await db.query(
+                'SELECT v.* FROM valves v JOIN manufacturers m ON v.manufacturer_id = m.id WHERE m.wallet_address IN (SELECT DISTINCT ip_address FROM user_consent WHERE user_id = ?)',
+                [userId]
             );
-            if (valveData.length > 0) {
-                userData.data.valves = valveData;
+            // Query 2: Valves where current owner is the user
+            const valvesByOwner = await db.query(
+                'SELECT v.* FROM valves v WHERE v.current_owner_id = ?',
+                [userId.toString()]
+            );
+            // Merge results, removing duplicates by valve id
+            const valveMap = new Map();
+            for (const v of valvesByManufacturer) {
+                valveMap.set(v.id, v);
+            }
+            for (const v of valvesByOwner) {
+                valveMap.set(v.id, v);
+            }
+            const mergedValves = Array.from(valveMap.values());
+            if (mergedValves.length > 0) {
+                userData.data.valves = mergedValves;
             }
 
             return userData;
