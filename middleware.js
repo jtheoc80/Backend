@@ -11,7 +11,11 @@ const checkAdmin = (req, res, next) => {
 
         // For now, we'll accept any valid JWT token as admin
         // In a real implementation, you'd check user roles/permissions
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        if (!process.env.JWT_SECRET) {
+            // Fail fast if JWT_SECRET is not set
+            return res.status(500).json({ error: 'Server misconfiguration: JWT secret not set' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         
         // Simple admin check - you may want to verify admin role from database
