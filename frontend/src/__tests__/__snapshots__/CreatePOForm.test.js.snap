@@ -1,0 +1,1014 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CreatePOForm Snapshot Testing should match snapshot with default props 1`] = `
+<div
+  class="create-po-form"
+>
+  <div
+    class="form-header"
+  >
+    <h2>
+      Create Purchase Order
+    </h2>
+  </div>
+  <form
+    class="po-form"
+  >
+    <div
+      class="form-section"
+    >
+      <h3>
+        Basic Information
+      </h3>
+      <div
+        class="form-row"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            for="po_number"
+          >
+            PO Number *
+          </label>
+          <input
+            class=""
+            id="po_number"
+            name="po_number"
+            placeholder="e.g., PO-2024-001"
+            type="text"
+            value=""
+          />
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="currency"
+          >
+            Currency
+          </label>
+          <select
+            id="currency"
+            name="currency"
+          >
+            <option
+              value="USD"
+            >
+              USD
+            </option>
+            <option
+              value="EUR"
+            >
+              EUR
+            </option>
+            <option
+              value="GBP"
+            >
+              GBP
+            </option>
+          </select>
+        </div>
+      </div>
+      <div
+        class="form-row"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            for="manufacturer_id"
+          >
+            Manufacturer *
+          </label>
+          <select
+            class=""
+            id="manufacturer_id"
+            name="manufacturer_id"
+          >
+            <option
+              value=""
+            >
+              Select a manufacturer
+            </option>
+            <option
+              value="mfg001"
+            >
+              Emerson Process Management
+            </option>
+            <option
+              value="mfg002"
+            >
+              Kitz Corporation
+            </option>
+          </select>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="distributor_id"
+          >
+            Distributor *
+          </label>
+          <select
+            class=""
+            id="distributor_id"
+            name="distributor_id"
+          >
+            <option
+              value=""
+            >
+              Select a distributor
+            </option>
+            <option
+              value="dist001"
+            >
+              Industrial Valve Solutions Inc
+            </option>
+            <option
+              value="dist002"
+            >
+              Global Valve Distribution
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div
+      class="form-section"
+    >
+      <div
+        class="section-header"
+      >
+        <h3>
+          Items
+        </h3>
+        <button
+          class="btn btn-secondary"
+          type="button"
+        >
+          Add Item
+        </button>
+      </div>
+      <div
+        class="item-row"
+      >
+        <div
+          class="item-header"
+        >
+          <h4>
+            Item 
+            1
+          </h4>
+        </div>
+        <div
+          class="form-row"
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              for="valve_id_0"
+            >
+              Valve ID *
+            </label>
+            <input
+              class=""
+              id="valve_id_0"
+              placeholder="e.g., valve-001"
+              type="text"
+              value=""
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="quantity_0"
+            >
+              Quantity *
+            </label>
+            <input
+              class=""
+              id="quantity_0"
+              min="1"
+              type="number"
+              value="1"
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="unit_price_0"
+            >
+              Unit Price *
+            </label>
+            <input
+              class=""
+              id="unit_price_0"
+              min="0"
+              step="0.01"
+              type="number"
+              value=""
+            />
+          </div>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="description_0"
+          >
+            Description *
+          </label>
+          <input
+            class=""
+            id="description_0"
+            placeholder="e.g., Ball Valve 1/2 inch"
+            type="text"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="form-section"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          for="total_amount"
+        >
+          Total Amount *
+        </label>
+        <div
+          class="total-amount-display"
+        >
+          <span
+            class="currency"
+          >
+            USD
+          </span>
+          <span
+            class="amount"
+          >
+            0.00
+          </span>
+        </div>
+      </div>
+      <div
+        class="form-group"
+      >
+        <label
+          for="notes"
+        >
+          Notes
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          placeholder="Additional notes or special instructions..."
+          rows="3"
+        />
+      </div>
+    </div>
+    <div
+      class="form-actions"
+    >
+      <button
+        class="btn btn-secondary"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+        Create Purchase Order
+      </button>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`CreatePOForm Snapshot Testing should match snapshot with multiple items 1`] = `
+<div
+  class="create-po-form"
+>
+  <div
+    class="form-header"
+  >
+    <h2>
+      Create Purchase Order
+    </h2>
+  </div>
+  <form
+    class="po-form"
+  >
+    <div
+      class="form-section"
+    >
+      <h3>
+        Basic Information
+      </h3>
+      <div
+        class="form-row"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            for="po_number"
+          >
+            PO Number *
+          </label>
+          <input
+            class=""
+            id="po_number"
+            name="po_number"
+            placeholder="e.g., PO-2024-001"
+            type="text"
+            value=""
+          />
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="currency"
+          >
+            Currency
+          </label>
+          <select
+            id="currency"
+            name="currency"
+          >
+            <option
+              value="USD"
+            >
+              USD
+            </option>
+            <option
+              value="EUR"
+            >
+              EUR
+            </option>
+            <option
+              value="GBP"
+            >
+              GBP
+            </option>
+          </select>
+        </div>
+      </div>
+      <div
+        class="form-row"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            for="manufacturer_id"
+          >
+            Manufacturer *
+          </label>
+          <select
+            class=""
+            id="manufacturer_id"
+            name="manufacturer_id"
+          >
+            <option
+              value=""
+            >
+              Select a manufacturer
+            </option>
+            <option
+              value="mfg001"
+            >
+              Emerson Process Management
+            </option>
+            <option
+              value="mfg002"
+            >
+              Kitz Corporation
+            </option>
+          </select>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="distributor_id"
+          >
+            Distributor *
+          </label>
+          <select
+            class=""
+            id="distributor_id"
+            name="distributor_id"
+          >
+            <option
+              value=""
+            >
+              Select a distributor
+            </option>
+            <option
+              value="dist001"
+            >
+              Industrial Valve Solutions Inc
+            </option>
+            <option
+              value="dist002"
+            >
+              Global Valve Distribution
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div
+      class="form-section"
+    >
+      <div
+        class="section-header"
+      >
+        <h3>
+          Items
+        </h3>
+        <button
+          class="btn btn-secondary"
+          type="button"
+        >
+          Add Item
+        </button>
+      </div>
+      <div
+        class="item-row"
+      >
+        <div
+          class="item-header"
+        >
+          <h4>
+            Item 
+            1
+          </h4>
+          <button
+            class="btn btn-danger btn-sm"
+            type="button"
+          >
+            Remove
+          </button>
+        </div>
+        <div
+          class="form-row"
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              for="valve_id_0"
+            >
+              Valve ID *
+            </label>
+            <input
+              class=""
+              id="valve_id_0"
+              placeholder="e.g., valve-001"
+              type="text"
+              value=""
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="quantity_0"
+            >
+              Quantity *
+            </label>
+            <input
+              class=""
+              id="quantity_0"
+              min="1"
+              type="number"
+              value="1"
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="unit_price_0"
+            >
+              Unit Price *
+            </label>
+            <input
+              class=""
+              id="unit_price_0"
+              min="0"
+              step="0.01"
+              type="number"
+              value=""
+            />
+          </div>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="description_0"
+          >
+            Description *
+          </label>
+          <input
+            class=""
+            id="description_0"
+            placeholder="e.g., Ball Valve 1/2 inch"
+            type="text"
+            value=""
+          />
+        </div>
+      </div>
+      <div
+        class="item-row"
+      >
+        <div
+          class="item-header"
+        >
+          <h4>
+            Item 
+            2
+          </h4>
+          <button
+            class="btn btn-danger btn-sm"
+            type="button"
+          >
+            Remove
+          </button>
+        </div>
+        <div
+          class="form-row"
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              for="valve_id_1"
+            >
+              Valve ID *
+            </label>
+            <input
+              class=""
+              id="valve_id_1"
+              placeholder="e.g., valve-001"
+              type="text"
+              value=""
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="quantity_1"
+            >
+              Quantity *
+            </label>
+            <input
+              class=""
+              id="quantity_1"
+              min="1"
+              type="number"
+              value="1"
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="unit_price_1"
+            >
+              Unit Price *
+            </label>
+            <input
+              class=""
+              id="unit_price_1"
+              min="0"
+              step="0.01"
+              type="number"
+              value=""
+            />
+          </div>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="description_1"
+          >
+            Description *
+          </label>
+          <input
+            class=""
+            id="description_1"
+            placeholder="e.g., Ball Valve 1/2 inch"
+            type="text"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="form-section"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          for="total_amount"
+        >
+          Total Amount *
+        </label>
+        <div
+          class="total-amount-display"
+        >
+          <span
+            class="currency"
+          >
+            USD
+          </span>
+          <span
+            class="amount"
+          >
+            0.00
+          </span>
+        </div>
+      </div>
+      <div
+        class="form-group"
+      >
+        <label
+          for="notes"
+        >
+          Notes
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          placeholder="Additional notes or special instructions..."
+          rows="3"
+        />
+      </div>
+    </div>
+    <div
+      class="form-actions"
+    >
+      <button
+        class="btn btn-secondary"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+        Create Purchase Order
+      </button>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`CreatePOForm Snapshot Testing should match snapshot with validation errors 1`] = `
+<div
+  class="create-po-form"
+>
+  <div
+    class="form-header"
+  >
+    <h2>
+      Create Purchase Order
+    </h2>
+  </div>
+  <form
+    class="po-form"
+  >
+    <div
+      class="form-section"
+    >
+      <h3>
+        Basic Information
+      </h3>
+      <div
+        class="form-row"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            for="po_number"
+          >
+            PO Number *
+          </label>
+          <input
+            class="error"
+            id="po_number"
+            name="po_number"
+            placeholder="e.g., PO-2024-001"
+            type="text"
+            value=""
+          />
+          <span
+            class="error-message"
+          >
+            PO Number is required
+          </span>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="currency"
+          >
+            Currency
+          </label>
+          <select
+            id="currency"
+            name="currency"
+          >
+            <option
+              value="USD"
+            >
+              USD
+            </option>
+            <option
+              value="EUR"
+            >
+              EUR
+            </option>
+            <option
+              value="GBP"
+            >
+              GBP
+            </option>
+          </select>
+        </div>
+      </div>
+      <div
+        class="form-row"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            for="manufacturer_id"
+          >
+            Manufacturer *
+          </label>
+          <select
+            class="error"
+            id="manufacturer_id"
+            name="manufacturer_id"
+          >
+            <option
+              value=""
+            >
+              Select a manufacturer
+            </option>
+            <option
+              value="mfg001"
+            >
+              Emerson Process Management
+            </option>
+            <option
+              value="mfg002"
+            >
+              Kitz Corporation
+            </option>
+          </select>
+          <span
+            class="error-message"
+          >
+            Manufacturer is required
+          </span>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="distributor_id"
+          >
+            Distributor *
+          </label>
+          <select
+            class="error"
+            id="distributor_id"
+            name="distributor_id"
+          >
+            <option
+              value=""
+            >
+              Select a distributor
+            </option>
+            <option
+              value="dist001"
+            >
+              Industrial Valve Solutions Inc
+            </option>
+            <option
+              value="dist002"
+            >
+              Global Valve Distribution
+            </option>
+          </select>
+          <span
+            class="error-message"
+          >
+            Distributor is required
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="form-section"
+    >
+      <div
+        class="section-header"
+      >
+        <h3>
+          Items
+        </h3>
+        <button
+          class="btn btn-secondary"
+          type="button"
+        >
+          Add Item
+        </button>
+      </div>
+      <div
+        class="item-row"
+      >
+        <div
+          class="item-header"
+        >
+          <h4>
+            Item 
+            1
+          </h4>
+        </div>
+        <div
+          class="form-row"
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              for="valve_id_0"
+            >
+              Valve ID *
+            </label>
+            <input
+              class="error"
+              id="valve_id_0"
+              placeholder="e.g., valve-001"
+              type="text"
+              value=""
+            />
+            <span
+              class="error-message"
+            >
+              Valve ID is required
+            </span>
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="quantity_0"
+            >
+              Quantity *
+            </label>
+            <input
+              class=""
+              id="quantity_0"
+              min="1"
+              type="number"
+              value="1"
+            />
+          </div>
+          <div
+            class="form-group"
+          >
+            <label
+              for="unit_price_0"
+            >
+              Unit Price *
+            </label>
+            <input
+              class="error"
+              id="unit_price_0"
+              min="0"
+              step="0.01"
+              type="number"
+              value=""
+            />
+            <span
+              class="error-message"
+            >
+              Unit price must be greater than 0
+            </span>
+          </div>
+        </div>
+        <div
+          class="form-group"
+        >
+          <label
+            for="description_0"
+          >
+            Description *
+          </label>
+          <input
+            class="error"
+            id="description_0"
+            placeholder="e.g., Ball Valve 1/2 inch"
+            type="text"
+            value=""
+          />
+          <span
+            class="error-message"
+          >
+            Description is required
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="form-section"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          for="total_amount"
+        >
+          Total Amount *
+        </label>
+        <div
+          class="total-amount-display"
+        >
+          <span
+            class="currency"
+          >
+            USD
+          </span>
+          <span
+            class="amount"
+          >
+            0.00
+          </span>
+        </div>
+        <span
+          class="error-message"
+        >
+          Total amount must be greater than 0
+        </span>
+      </div>
+      <div
+        class="form-group"
+      >
+        <label
+          for="notes"
+        >
+          Notes
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          placeholder="Additional notes or special instructions..."
+          rows="3"
+        />
+      </div>
+    </div>
+    <div
+      class="form-actions"
+    >
+      <button
+        class="btn btn-secondary"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+        Create Purchase Order
+      </button>
+    </div>
+  </form>
+</div>
+`;

@@ -1,0 +1,863 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`POList Snapshot Testing should match snapshot with default props 1`] = `
+<div
+  class="po-list"
+>
+  <div
+    class="list-header"
+  >
+    <div
+      class="header-left"
+    >
+      <h2>
+        Purchase Orders
+      </h2>
+      <div
+        class="po-stats"
+      >
+        <span
+          class="stat"
+        >
+          Total: 
+          3
+        </span>
+        <span
+          class="stat"
+        >
+          Pending: 
+          1
+        </span>
+        <span
+          class="stat"
+        >
+          Approved: 
+          1
+        </span>
+      </div>
+    </div>
+    <button
+      class="btn btn-primary"
+    >
+      Create New PO
+    </button>
+  </div>
+  <div
+    class="list-controls"
+  >
+    <div
+      class="search-bar"
+    >
+      <input
+        class="search-input"
+        placeholder="Search by PO number, manufacturer, or distributor..."
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="filters"
+    >
+      <select
+        class="filter-select"
+      >
+        <option
+          value=""
+        >
+          All Statuses
+        </option>
+        <option
+          value="pending"
+        >
+          Pending
+        </option>
+        <option
+          value="approved"
+        >
+          Approved
+        </option>
+        <option
+          value="rejected"
+        >
+          Rejected
+        </option>
+        <option
+          value="cancelled"
+        >
+          Cancelled
+        </option>
+      </select>
+      <select
+        class="filter-select"
+      >
+        <option
+          value="created_at"
+        >
+          Sort by Created Date
+        </option>
+        <option
+          value="updated_at"
+        >
+          Sort by Updated Date
+        </option>
+        <option
+          value="po_number"
+        >
+          Sort by PO Number
+        </option>
+        <option
+          value="total_amount"
+        >
+          Sort by Amount
+        </option>
+        <option
+          value="status"
+        >
+          Sort by Status
+        </option>
+      </select>
+      <button
+        class="sort-button"
+        title="Sort Ascending"
+      >
+        ↓
+      </button>
+    </div>
+  </div>
+  <div
+    class="po-table-container"
+  >
+    <table
+      class="po-table"
+    >
+      <thead>
+        <tr>
+          <th
+            class="sortable"
+          >
+            PO Number 
+            ↕️
+          </th>
+          <th>
+            Manufacturer
+          </th>
+          <th>
+            Distributor
+          </th>
+          <th
+            class="sortable"
+          >
+            Amount 
+            ↕️
+          </th>
+          <th
+            class="sortable"
+          >
+            Status 
+            ↕️
+          </th>
+          <th
+            class="sortable"
+          >
+            Created 
+            ↓
+          </th>
+          <th>
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          class="po-row"
+        >
+          <td
+            class="po-number"
+          >
+            <button
+              class="link-button"
+            >
+              PO-2024-003
+            </button>
+          </td>
+          <td>
+            Emerson Process Management
+          </td>
+          <td>
+            Industrial Valve Solutions Inc
+          </td>
+          <td
+            class="amount"
+          >
+            €750.25
+          </td>
+          <td>
+            <span
+              class="status-badge status-rejected"
+            >
+              Rejected
+            </span>
+          </td>
+          <td
+            class="date"
+          >
+            Jan 17, 2024, 09:15 AM
+          </td>
+          <td>
+            <div
+              class="action-buttons"
+            >
+              <button
+                class="btn btn-sm btn-secondary"
+                title="View Details"
+              >
+                View
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr
+          class="po-row"
+        >
+          <td
+            class="po-number"
+          >
+            <button
+              class="link-button"
+            >
+              PO-2024-002
+            </button>
+          </td>
+          <td>
+            Kitz Corporation
+          </td>
+          <td>
+            Global Valve Distribution
+          </td>
+          <td
+            class="amount"
+          >
+            $2,500.75
+          </td>
+          <td>
+            <span
+              class="status-badge status-approved"
+            >
+              Approved
+            </span>
+          </td>
+          <td
+            class="date"
+          >
+            Jan 16, 2024, 02:45 PM
+          </td>
+          <td>
+            <div
+              class="action-buttons"
+            >
+              <button
+                class="btn btn-sm btn-secondary"
+                title="View Details"
+              >
+                View
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr
+          class="po-row"
+        >
+          <td
+            class="po-number"
+          >
+            <button
+              class="link-button"
+            >
+              PO-2024-001
+            </button>
+          </td>
+          <td>
+            Emerson Process Management
+          </td>
+          <td>
+            Industrial Valve Solutions Inc
+          </td>
+          <td
+            class="amount"
+          >
+            $1,000.50
+          </td>
+          <td>
+            <span
+              class="status-badge status-pending"
+            >
+              Pending
+            </span>
+          </td>
+          <td
+            class="date"
+          >
+            Jan 15, 2024, 10:30 AM
+          </td>
+          <td>
+            <div
+              class="action-buttons"
+            >
+              <button
+                class="btn btn-sm btn-secondary"
+                title="View Details"
+              >
+                View
+              </button>
+              <button
+                class="btn btn-sm btn-success"
+                title="Approve PO"
+              >
+                Approve
+              </button>
+              <button
+                class="btn btn-sm btn-danger"
+                title="Reject PO"
+              >
+                Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`POList Snapshot Testing should match snapshot with empty state 1`] = `
+<div
+  class="po-list"
+>
+  <div
+    class="list-header"
+  >
+    <div
+      class="header-left"
+    >
+      <h2>
+        Purchase Orders
+      </h2>
+      <div
+        class="po-stats"
+      >
+        <span
+          class="stat"
+        >
+          Total: 
+          0
+        </span>
+        <span
+          class="stat"
+        >
+          Pending: 
+          0
+        </span>
+        <span
+          class="stat"
+        >
+          Approved: 
+          0
+        </span>
+      </div>
+    </div>
+    <button
+      class="btn btn-primary"
+    >
+      Create New PO
+    </button>
+  </div>
+  <div
+    class="list-controls"
+  >
+    <div
+      class="search-bar"
+    >
+      <input
+        class="search-input"
+        placeholder="Search by PO number, manufacturer, or distributor..."
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="filters"
+    >
+      <select
+        class="filter-select"
+      >
+        <option
+          value=""
+        >
+          All Statuses
+        </option>
+        <option
+          value="pending"
+        >
+          Pending
+        </option>
+        <option
+          value="approved"
+        >
+          Approved
+        </option>
+        <option
+          value="rejected"
+        >
+          Rejected
+        </option>
+        <option
+          value="cancelled"
+        >
+          Cancelled
+        </option>
+      </select>
+      <select
+        class="filter-select"
+      >
+        <option
+          value="created_at"
+        >
+          Sort by Created Date
+        </option>
+        <option
+          value="updated_at"
+        >
+          Sort by Updated Date
+        </option>
+        <option
+          value="po_number"
+        >
+          Sort by PO Number
+        </option>
+        <option
+          value="total_amount"
+        >
+          Sort by Amount
+        </option>
+        <option
+          value="status"
+        >
+          Sort by Status
+        </option>
+      </select>
+      <button
+        class="sort-button"
+        title="Sort Ascending"
+      >
+        ↓
+      </button>
+    </div>
+  </div>
+  <div
+    class="empty-state"
+  >
+    <h3>
+      No Purchase Orders Found
+    </h3>
+    <p>
+      Get started by creating your first purchase order.
+    </p>
+    <button
+      class="btn btn-primary"
+    >
+      Create Your First PO
+    </button>
+  </div>
+</div>
+`;
+
+exports[`POList Snapshot Testing should match snapshot with error state 1`] = `
+<div
+  class="po-list-error"
+>
+  <div
+    class="error-message"
+  >
+    <h3>
+      Error Loading Purchase Orders
+    </h3>
+    <p>
+      Test error message
+    </p>
+  </div>
+</div>
+`;
+
+exports[`POList Snapshot Testing should match snapshot with filtered results 1`] = `
+<div
+  class="po-list"
+>
+  <div
+    class="list-header"
+  >
+    <div
+      class="header-left"
+    >
+      <h2>
+        Purchase Orders
+      </h2>
+      <div
+        class="po-stats"
+      >
+        <span
+          class="stat"
+        >
+          Total: 
+          1
+        </span>
+        <span
+          class="stat"
+        >
+          Pending: 
+          1
+        </span>
+        <span
+          class="stat"
+        >
+          Approved: 
+          0
+        </span>
+      </div>
+    </div>
+    <button
+      class="btn btn-primary"
+    >
+      Create New PO
+    </button>
+  </div>
+  <div
+    class="list-controls"
+  >
+    <div
+      class="search-bar"
+    >
+      <input
+        class="search-input"
+        placeholder="Search by PO number, manufacturer, or distributor..."
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="filters"
+    >
+      <select
+        class="filter-select"
+      >
+        <option
+          value=""
+        >
+          All Statuses
+        </option>
+        <option
+          value="pending"
+        >
+          Pending
+        </option>
+        <option
+          value="approved"
+        >
+          Approved
+        </option>
+        <option
+          value="rejected"
+        >
+          Rejected
+        </option>
+        <option
+          value="cancelled"
+        >
+          Cancelled
+        </option>
+      </select>
+      <select
+        class="filter-select"
+      >
+        <option
+          value="created_at"
+        >
+          Sort by Created Date
+        </option>
+        <option
+          value="updated_at"
+        >
+          Sort by Updated Date
+        </option>
+        <option
+          value="po_number"
+        >
+          Sort by PO Number
+        </option>
+        <option
+          value="total_amount"
+        >
+          Sort by Amount
+        </option>
+        <option
+          value="status"
+        >
+          Sort by Status
+        </option>
+      </select>
+      <button
+        class="sort-button"
+        title="Sort Ascending"
+      >
+        ↓
+      </button>
+    </div>
+  </div>
+  <div
+    class="po-table-container"
+  >
+    <table
+      class="po-table"
+    >
+      <thead>
+        <tr>
+          <th
+            class="sortable"
+          >
+            PO Number 
+            ↕️
+          </th>
+          <th>
+            Manufacturer
+          </th>
+          <th>
+            Distributor
+          </th>
+          <th
+            class="sortable"
+          >
+            Amount 
+            ↕️
+          </th>
+          <th
+            class="sortable"
+          >
+            Status 
+            ↕️
+          </th>
+          <th
+            class="sortable"
+          >
+            Created 
+            ↓
+          </th>
+          <th>
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          class="po-row"
+        >
+          <td
+            class="po-number"
+          >
+            <button
+              class="link-button"
+            >
+              PO-2024-001
+            </button>
+          </td>
+          <td>
+            Emerson Process Management
+          </td>
+          <td>
+            Industrial Valve Solutions Inc
+          </td>
+          <td
+            class="amount"
+          >
+            $1,000.50
+          </td>
+          <td>
+            <span
+              class="status-badge status-pending"
+            >
+              Pending
+            </span>
+          </td>
+          <td
+            class="date"
+          >
+            Jan 15, 2024, 10:30 AM
+          </td>
+          <td>
+            <div
+              class="action-buttons"
+            >
+              <button
+                class="btn btn-sm btn-secondary"
+                title="View Details"
+              >
+                View
+              </button>
+              <button
+                class="btn btn-sm btn-success"
+                title="Approve PO"
+              >
+                Approve
+              </button>
+              <button
+                class="btn btn-sm btn-danger"
+                title="Reject PO"
+              >
+                Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`POList Snapshot Testing should match snapshot with loading state 1`] = `
+<div
+  class="po-list"
+>
+  <div
+    class="list-header"
+  >
+    <div
+      class="header-left"
+    >
+      <h2>
+        Purchase Orders
+      </h2>
+      <div
+        class="po-stats"
+      >
+        <span
+          class="stat"
+        >
+          Total: 
+          3
+        </span>
+        <span
+          class="stat"
+        >
+          Pending: 
+          1
+        </span>
+        <span
+          class="stat"
+        >
+          Approved: 
+          1
+        </span>
+      </div>
+    </div>
+    <button
+      class="btn btn-primary"
+      disabled=""
+    >
+      Create New PO
+    </button>
+  </div>
+  <div
+    class="list-controls"
+  >
+    <div
+      class="search-bar"
+    >
+      <input
+        class="search-input"
+        placeholder="Search by PO number, manufacturer, or distributor..."
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="filters"
+    >
+      <select
+        class="filter-select"
+      >
+        <option
+          value=""
+        >
+          All Statuses
+        </option>
+        <option
+          value="pending"
+        >
+          Pending
+        </option>
+        <option
+          value="approved"
+        >
+          Approved
+        </option>
+        <option
+          value="rejected"
+        >
+          Rejected
+        </option>
+        <option
+          value="cancelled"
+        >
+          Cancelled
+        </option>
+      </select>
+      <select
+        class="filter-select"
+      >
+        <option
+          value="created_at"
+        >
+          Sort by Created Date
+        </option>
+        <option
+          value="updated_at"
+        >
+          Sort by Updated Date
+        </option>
+        <option
+          value="po_number"
+        >
+          Sort by PO Number
+        </option>
+        <option
+          value="total_amount"
+        >
+          Sort by Amount
+        </option>
+        <option
+          value="status"
+        >
+          Sort by Status
+        </option>
+      </select>
+      <button
+        class="sort-button"
+        title="Sort Ascending"
+      >
+        ↓
+      </button>
+    </div>
+  </div>
+  <div
+    class="loading-state"
+  >
+    <div
+      class="loading-spinner"
+      data-testid="loading-spinner"
+    />
+    <p>
+      Loading purchase orders...
+    </p>
+  </div>
+</div>
+`;
