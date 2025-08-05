@@ -587,8 +587,7 @@ const requestProfileDeletion = async (req, res) => {
 
         // Log activity
         await logActivity(db, req.user.id, 'USER_DELETE_REQUEST', { 
-            email: req.user.email,
-            confirmationToken: deletionToken 
+            email: req.user.email
         }, 'success');
 
         res.json({
