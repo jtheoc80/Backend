@@ -173,12 +173,15 @@ class Valve {
     async burnToken(burnedBy, reason) {
         const { db: database } = require('./database');
         
+        console.log('burnToken called with:', { burnedBy, reason, valveId: this.id });
+        
         // Check if valve is already burned
         if (this.is_burned) {
             throw new Error('Valve token is already burned');
         }
         
         try {
+            console.log('Starting burn transaction');
             await database.run('BEGIN TRANSACTION');
             
             // Update valve as burned
@@ -186,19 +189,10 @@ class Valve {
                               SET is_burned = 1, burn_reason = ?, burned_at = CURRENT_TIMESTAMP, burned_by = ?, updated_at = CURRENT_TIMESTAMP 
                               WHERE id = ?`;
             
+            console.log('Updating valve as burned');
             await database.run(updateSql, [reason, burnedBy, this.id]);
             
-            // Record the burn in ownership transfers for audit trail
-            const transferSql = `INSERT INTO valve_ownership_transfers (
-                valve_id, from_owner_id, from_owner_type, to_owner_id, to_owner_type,
-                transfer_type, reason, is_completed
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`;
-            
-            await database.run(transferSql, [
-                this.id, this.current_owner_id, this.current_owner_type,
-                'BURNED', 'system', 'burn', reason
-            ]);
-            
+            console.log('Committing transaction');
             await database.run('COMMIT');
             
             // Update instance properties
@@ -207,6 +201,7 @@ class Valve {
             this.burned_by = burnedBy;
             this.burned_at = new Date().toISOString();
             
+            console.log('Burn successful');
             return {
                 success: true,
                 message: 'Valve token burned successfully',
@@ -214,6 +209,7 @@ class Valve {
             };
             
         } catch (error) {
+            console.log('Burn error:', error);
             await database.run('ROLLBACK');
             throw error;
         }
@@ -239,17 +235,6 @@ class Valve {
                               WHERE id = ?`;
             
             await database.run(updateSql, [newOwnerId, newOwnerType, this.id]);
-            
-            // Record the restoration in ownership transfers
-            const transferSql = `INSERT INTO valve_ownership_transfers (
-                valve_id, from_owner_id, from_owner_type, to_owner_id, to_owner_type,
-                transfer_type, reason, is_completed
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`;
-            
-            await database.run(transferSql, [
-                this.id, 'BURNED', 'system',
-                newOwnerId, newOwnerType, 'restore', reason
-            ]);
             
             await database.run('COMMIT');
             

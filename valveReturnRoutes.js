@@ -8,7 +8,7 @@ const {
     burnValveToken,
     restoreValveOwnership
 } = require('./valveReturnController');
-const { authenticate } = require('./authMiddleware');
+const { verifyToken } = require('./authMiddleware');
 
 /**
  * Valve Return Routes
@@ -17,21 +17,21 @@ const { authenticate } = require('./authMiddleware');
  */
 
 // Create a new return request
-router.post('/valve-returns', authenticate, createReturnRequest);
+router.post('/valve-returns', verifyToken, createReturnRequest);
 
 // Get return requests with filtering
-router.get('/valve-returns', authenticate, getReturnRequests);
+router.get('/valve-returns', verifyToken, getReturnRequests);
 
 // Get specific return request by ID
-router.get('/valve-returns/:returnId', authenticate, getReturnRequestById);
+router.get('/valve-returns/:returnId', verifyToken, getReturnRequestById);
 
 // Approve return request (admin only)
-router.post('/valve-returns/:returnId/approve', authenticate, approveReturnRequest);
+router.post('/valve-returns/:returnId/approve', verifyToken, approveReturnRequest);
 
 // Burn valve token (admin only)
-router.post('/valves/:valveId/burn', authenticate, burnValveToken);
+router.post('/valves/:valveId/burn', verifyToken, burnValveToken);
 
 // Restore valve ownership (admin only)
-router.post('/valves/:valveId/restore', authenticate, restoreValveOwnership);
+router.post('/valves/:valveId/restore', verifyToken, restoreValveOwnership);
 
 module.exports = router;
