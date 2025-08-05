@@ -101,12 +101,20 @@ const App: React.FC = () => {
   };
 
   const handleValveDelete = (valveId: string) => {
-    if (confirm('Are you sure you want to delete this valve?')) {
-      setValves(prev => prev.filter(v => v.id !== valveId));
-      console.log('Deleted valve:', valveId);
+    setConfirmDeleteId(valveId);
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmDeleteId) {
+      setValves(prev => prev.filter(v => v.id !== confirmDeleteId));
+      console.log('Deleted valve:', confirmDeleteId);
+      setConfirmDeleteId(null);
     }
   };
 
+  const handleCancelDelete = () => {
+    setConfirmDeleteId(null);
+  };
   return (
     <div className="app">
       <header className="app-header">
