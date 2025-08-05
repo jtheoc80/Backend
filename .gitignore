@@ -6,3 +6,25 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# ValveGPT generated data
+data/embeddings.json
+*.db-journal
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp

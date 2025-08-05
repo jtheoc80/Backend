@@ -1,6 +1,6 @@
 # ValveChain Backend API
 
-A Node.js/Express backend API for managing purchase orders, manufacturers, distributors, and valve tokenization in the ValveChain ecosystem.
+A Node.js/Express backend API for managing purchase orders, manufacturers, distributors, and valve tokenization in the ValveChain ecosystem, now enhanced with **ValveGPT Self-Learning capabilities**.
 
 ## Features
 
@@ -11,6 +11,64 @@ A Node.js/Express backend API for managing purchase orders, manufacturers, distr
 - **Valve Tokenization**: Blockchain-based valve tracking
 - **Audit Logging**: Comprehensive activity tracking
 - **Territory Management**: Geographical distribution control
+- **🆕 ValveGPT Self-Learning**: Automated content crawling, summarization, and semantic search for valve industry knowledge
+
+## 🧠 ValveGPT Self-Learning System
+
+The ValveGPT system automatically learns from valve industry sources to provide intelligent insights and answers. It includes:
+
+### Components
+
+1. **Intelligent Crawler** (`crawler.js`)
+   - Automatically crawls valve industry websites
+   - Extracts relevant technical content
+   - Calculates content relevance scores
+   - Configurable source URLs
+   - Robust error handling and retry logic
+
+2. **Content Processor** (`ingest.js`)
+   - Summarizes content using OpenAI GPT models
+   - Generates embeddings for semantic search
+   - Stores in Pinecone vector database (with local fallback)
+   - Batch processing for efficiency
+
+3. **Job Scheduler** (`scheduler.js`)
+   - Automated periodic updates (default: every 6 hours)
+   - Manual execution capabilities
+   - Comprehensive statistics and monitoring
+   - Graceful shutdown handling
+
+### ValveGPT API Endpoints
+
+| Method | Endpoint | Description | Authentication |
+|--------|----------|-------------|----------------|
+| GET | `/api/valvegpt/status` | Get system status and statistics | Required |
+| POST | `/api/valvegpt/run-once` | Manually trigger crawl and ingest | Required |
+| POST | `/api/valvegpt/search` | Search for valve-related content | Required |
+| POST | `/api/valvegpt/sources` | Update crawler source URLs | Required |
+
+### Example Usage
+
+```bash
+# Get system status
+curl -H "Authorization: Bearer <token>" http://localhost:3000/api/valvegpt/status
+
+# Search for content
+curl -H "Authorization: Bearer <token>" \
+     -H "Content-Type: application/json" \
+     -d '{"query": "ball valve maintenance", "topK": 5}' \
+     http://localhost:3000/api/valvegpt/search
+
+# Manually trigger learning process
+curl -H "Authorization: Bearer <token>" \
+     -X POST http://localhost:3000/api/valvegpt/run-once
+
+# Update crawler sources
+curl -H "Authorization: Bearer <token>" \
+     -H "Content-Type: application/json" \
+     -d '{"sources": ["https://example.com/valves"]}' \
+     http://localhost:3000/api/valvegpt/sources
+```
 
 ## Purchase Order Workflow
 
@@ -66,10 +124,27 @@ SMTP_HOST=your-smtp-host
 SMTP_PORT=587
 SMTP_USER=your-email@domain.com
 SMTP_PASS=your-email-password
+
+# 🆕 ValveGPT Self-Learning Configuration
+# OpenAI API Key for content summarization and embeddings (Required)
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Pinecone Configuration (Optional - will fallback to local storage)
+PINECONE_API_KEY=your-pinecone-api-key-here
+PINECONE_INDEX_NAME=valvegpt-embeddings
+
+# Scheduler Configuration
+VALVEGPT_AUTO_START=true
+VALVEGPT_SCHEDULE=0 */6 * * *
+SCHEDULER_TIMEZONE=UTC
 ```
 
 ### Key Environment Variables
 
+- **OPENAI_API_KEY**: Required for ValveGPT content summarization and embeddings
+- **PINECONE_API_KEY**: Optional vector database (falls back to local JSON storage)
+- **VALVEGPT_AUTO_START**: Whether to start the scheduler automatically (default: true)
+- **VALVEGPT_SCHEDULE**: Cron expression for update frequency (default: every 6 hours)
 - **PO_CONTRACT_ADDRESS**: Smart contract address for purchase order blockchain operations
 - **CONTRACT_ADDRESS**: Main ValveChain contract address for valve tokenization
 - **JWT_SECRET**: Secret key for JWT token generation (change in production)
@@ -97,6 +172,32 @@ cp .env.example .env
 4. Start the server:
 ```bash
 npm start
+```
+
+## 🚀 Quick Start with ValveGPT
+
+1. **Basic Setup** (without OpenAI):
+```bash
+npm install
+VALVEGPT_AUTO_START=false npm start
+```
+
+2. **Full Setup** (with OpenAI integration):
+```bash
+# Set your OpenAI API key
+echo "OPENAI_API_KEY=your-key-here" >> .env
+
+# Start with auto-learning enabled
+npm start
+```
+
+3. **Test the System**:
+```bash
+# Run the demo script
+node demo-valvegpt.js
+
+# Or test manually
+curl http://localhost:3000/api/health
 ```
 
 ## Testing
@@ -239,12 +340,21 @@ CREATE TABLE purchase_orders (
 ```
 Backend/
 ├── __tests__/           # Test files
+│   ├── crawler.test.js      # 🆕 Crawler tests
+│   ├── ingest.test.js       # 🆕 Content ingestor tests
+│   ├── scheduler.test.js    # 🆕 Scheduler tests
+│   └── ...                  # Other existing tests
+├── data/                # 🆕 Local embeddings storage (created automatically)
 ├── node_modules/        # Dependencies
+├── crawler.js           # 🆕 Web crawler for valve content
+├── ingest.js           # 🆕 Content summarization and embedding
+├── scheduler.js        # 🆕 Job scheduler for automation
+├── demo-valvegpt.js    # 🆕 Demo script for ValveGPT features
 ├── poController.js      # PO business logic
 ├── poModel.js          # PO data model
 ├── poRoutes.js         # PO API routes
 ├── database.js         # Database configuration
-├── index.js            # Main application entry
+├── index.js            # Main application entry (🆕 includes ValveGPT)
 ├── package.json        # Project dependencies
 └── .env               # Environment variables
 ```
