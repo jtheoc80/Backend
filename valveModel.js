@@ -1,4 +1,5 @@
 const { db } = require('./database');
+const crypto = require('crypto');
 
 class Valve {
     constructor(data) {
@@ -418,7 +419,8 @@ class Valve {
 
     // Generate mock transaction hash
     static generateTransactionHash() {
-        return '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+        // Use cryptographically secure random bytes for transaction hash
+        return '0x' + crypto.randomBytes(32).toString('hex');
     }
 
     // JSON representation
