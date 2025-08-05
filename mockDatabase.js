@@ -42,8 +42,8 @@ class MockDatabase {
             // Mock select with filtering
             let filteredLogs = [...this.logs];
             
-            // Apply filters based on parameters
-            const [user, action, startDate, endDate, limit, offset] = params;
+            // Apply filters based on named parameters object
+            const { user, action, startDate, endDate, limit, offset } = params || {};
             
             if (user) {
                 filteredLogs = filteredLogs.filter(log => log.user_id === user);
