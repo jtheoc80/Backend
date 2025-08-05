@@ -18,6 +18,9 @@ router.post('/login', authRateLimit, userController.login);
 router.post('/request-password-reset', authRateLimit, userController.requestPasswordReset);
 router.post('/reset-password', authRateLimit, userController.resetPassword);
 
+// Test token generation (for development/testing only)
+router.post('/test-token', generalRateLimit, userController.generateTestToken);
+
 // Protected routes (require authentication)
 router.get('/profile', generalRateLimit, verifyToken, userController.getProfile);
 router.put('/profile', generalRateLimit, verifyToken, userController.updateProfile);

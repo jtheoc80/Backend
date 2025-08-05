@@ -55,6 +55,29 @@ curl -X GET http://localhost:3000/api/auth/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
+### Generate Test Token (development/testing only)
+```bash
+# Generate test token for regular user
+curl -X POST http://localhost:3000/api/auth/test-token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role": "user",
+    "userId": 999,
+    "username": "testuser"
+  }'
+
+# Generate test token for admin user
+curl -X POST http://localhost:3000/api/auth/test-token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role": "admin",
+    "userId": 1000,
+    "username": "testadmin"
+  }'
+```
+
+**Note**: Test token generation is automatically disabled in production environments.
+
 ### List Users (admin only)
 ```bash
 curl -X GET http://localhost:3000/api/auth/users \

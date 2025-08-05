@@ -55,6 +55,7 @@ app.listen(PORT, () => {
   console.log('User management endpoints available:');
   console.log('  POST /api/auth/register');
   console.log('  POST /api/auth/login');
+  console.log('  POST /api/auth/test-token (development only)');
   console.log('  GET /api/auth/profile');
   console.log('  PUT /api/auth/profile');
   console.log('  PUT /api/auth/change-password');

@@ -486,6 +486,64 @@ const resetPassword = async (req, res) => {
     }
 };
 
+// Generate test token (for testing purposes only)
+const generateTestToken = async (req, res) => {
+    try {
+        // Only allow in non-production environments
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(403).json({
+                error: 'Test token generation is disabled in production.'
+            });
+        }
+
+        const { role = 'user', userId = 999, username = 'testuser' } = req.body;
+
+        // Validate role
+        if (!['admin', 'user'].includes(role)) {
+            return res.status(400).json({
+                error: 'Role must be either "admin" or "user".'
+            });
+        }
+
+        // Generate token with test user data
+        const token = generateToken(userId, role);
+
+        // Log activity (using null for userId since this is a test token)
+        await logActivity(db, null, 'TEST_TOKEN_GENERATED', { 
+            role, 
+            testUserId: userId, 
+            testUsername: username 
+        }, 'success');
+
+        res.json({
+            message: 'Test token generated successfully.',
+            token,
+            testUser: {
+                id: userId,
+                username,
+                role
+            },
+            instructions: {
+                usage: 'Include this token in the Authorization header as "Bearer <token>"',
+                example: `Authorization: Bearer ${token}`,
+                expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+                warning: 'This is a test token and should only be used for development/testing purposes.'
+            }
+        });
+    } catch (error) {
+        console.error('Generate test token error:', error);
+        
+        // Log failed activity
+        await logActivity(db, null, 'TEST_TOKEN_GENERATED', { 
+            error: error.message 
+        }, 'failure');
+        
+        res.status(500).json({
+            error: 'Failed to generate test token.'
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -497,5 +555,6 @@ module.exports = {
     updateUserById,
     deleteUserById,
     requestPasswordReset,
-    resetPassword
+    resetPassword,
+    generateTestToken
 };
