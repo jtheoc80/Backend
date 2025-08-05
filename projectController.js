@@ -116,7 +116,11 @@ const assignUserToProject = async (req, res) => {
             });
         }
 
-        if (targetUser.organization_id !== project.organization_id) {
+        if (
+            targetUser.organization_id == null ||
+            project.organization_id == null ||
+            targetUser.organization_id !== project.organization_id
+        ) {
             return res.status(400).json({
                 error: 'User must belong to the same organization as the project'
             });
