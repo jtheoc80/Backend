@@ -126,8 +126,15 @@ const requireOrganizationAccess = (req, res, next) => {
         });
     }
 
-    const organizationId = req.params.organizationId || req.params.id || req.body.organization_id;
-    
+    // Only accept organizationId from a single trusted source (route param)
+    const organizationId = req.params.organizationId;
+
+    // Validate organizationId (assuming MongoDB ObjectId format)
+    if (!organizationId || !isValidOrganizationId(organizationId)) {
+        return res.status(400).json({
+            error: 'Invalid or missing organization ID.'
+        });
+    }
     // System admin can access any organization
     if (req.user.role === 'admin') {
         return next();
