@@ -55,9 +55,8 @@ describe('ValveChain API Endpoints', () => {
     mockContract.requestRepair.mockResolvedValue(defaultMockTx);
     mockContract.logRepair.mockResolvedValue(defaultMockTx);
     
-    // Import app after mocking (to ensure mocks are applied)
-    delete require.cache[require.resolve('../index.js')];
-    app = require('../index.js');
+    // Create a new app instance for each test
+    app = require('../index.js')();
   });
 
   describe('GET /api/health', () => {
