@@ -212,7 +212,7 @@ app.post('/api/repair-request', async (req, res) => {
     const tx = await contract.requestRepair(
       serialNumber,
       contractor,
-      { value: ethers.parseEther(amountEth) }
+      { value: parseEther(amountEth) }
     );
     await tx.wait();
     
