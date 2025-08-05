@@ -64,7 +64,8 @@ const verifyToken = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret');
+        const secret = process.env.JWT_SECRET || 'default-secret';
+        const decoded = jwt.verify(token, secret);
         req.user = decoded;
         next();
     } catch (error) {
