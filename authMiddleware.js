@@ -98,6 +98,51 @@ const requireRole = (requiredRole) => {
 // Check if user is admin
 const requireAdmin = requireRole('admin');
 
+// Check if user is organization admin
+const requireOrganizationAdmin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ 
+            error: 'Authentication required.' 
+        });
+    }
+
+    const isSystemAdmin = req.user.role === 'admin';
+    const isOrgAdmin = req.user.organization_role === 'admin';
+
+    if (!isSystemAdmin && !isOrgAdmin) {
+        return res.status(403).json({ 
+            error: 'Access denied. Organization administrator role required.' 
+        });
+    }
+
+    next();
+};
+
+// Check if user can access organization resources
+const requireOrganizationAccess = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ 
+            error: 'Authentication required.' 
+        });
+    }
+
+    const organizationId = req.params.organizationId || req.params.id || req.body.organization_id;
+    
+    // System admin can access any organization
+    if (req.user.role === 'admin') {
+        return next();
+    }
+
+    // User must belong to the organization they're trying to access
+    if (req.user.organization_id !== organizationId) {
+        return res.status(403).json({ 
+            error: 'Access denied. You can only access resources within your organization.' 
+        });
+    }
+
+    next();
+};
+
 // Check if user is admin or owner of the resource
 const requireAdminOrOwner = (req, res, next) => {
     if (!req.user) {
@@ -191,6 +236,8 @@ module.exports = {
     verifyToken,
     requireRole,
     requireAdmin,
+    requireOrganizationAdmin,
+    requireOrganizationAccess,
     requireAdminOrOwner,
     optionalAuth,
     rateLimit,

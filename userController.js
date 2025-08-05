@@ -8,7 +8,7 @@ const crypto = require('crypto');
 // Register new user
 const register = async (req, res) => {
     try {
-        const { username, email, password, role } = req.body;
+        const { username, email, password, role, organization_id, organization_role } = req.body;
 
         // Validate input
         if (!username || !email || !password) {
@@ -36,6 +36,14 @@ const register = async (req, res) => {
         const userData = { username, email, password };
         if (role && ['admin', 'user'].includes(role)) {
             userData.role = role;
+        }
+        
+        // Add organization data if provided
+        if (organization_id) {
+            userData.organization_id = organization_id;
+        }
+        if (organization_role && ['admin', 'user'].includes(organization_role)) {
+            userData.organization_role = organization_role;
         }
 
         const user = await User.create(userData);

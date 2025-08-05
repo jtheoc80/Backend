@@ -8,6 +8,8 @@ class User {
         this.email = data.email;
         this.password = data.password;
         this.role = data.role || 'user';
+        this.organization_id = data.organization_id;
+        this.organization_role = data.organization_role || 'user';
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
         this.is_verified = data.is_verified || 0;
@@ -17,16 +19,16 @@ class User {
 
     // Create a new user
     static async create(userData) {
-        const { username, email, password, role = 'user' } = userData;
+        const { username, email, password, role = 'user', organization_id, organization_role = 'user' } = userData;
         
         // Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const sql = `INSERT INTO users (username, email, password, role) 
-                     VALUES (?, ?, ?, ?)`;
+        const sql = `INSERT INTO users (username, email, password, role, organization_id, organization_role) 
+                     VALUES (?, ?, ?, ?, ?, ?)`;
         
-        const result = await db.run(sql, [username, email, hashedPassword, role]);
+        const result = await db.run(sql, [username, email, hashedPassword, role, organization_id, organization_role]);
         
         // Return the created user
         return await User.findById(result.lastID);
@@ -79,7 +81,7 @@ class User {
 
     // Update user
     async update(updateData) {
-        const allowedFields = ['username', 'email', 'role', 'is_verified'];
+        const allowedFields = ['username', 'email', 'role', 'is_verified', 'organization_id', 'organization_role'];
         const updates = [];
         const values = [];
 
@@ -149,6 +151,40 @@ class User {
         this.reset_token = null;
         this.reset_token_expires = null;
         return this;
+    }
+
+    // Get all users within an organization
+    static async findByOrganization(organizationId, page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        const sql = `SELECT * FROM users WHERE organization_id = ? ORDER BY organization_role DESC, created_at DESC LIMIT ? OFFSET ?`;
+        const rows = await db.query(sql, [organizationId, limit, offset]);
+        
+        return rows.map(row => new User(row));
+    }
+
+    // Check if user is organization admin
+    isOrganizationAdmin() {
+        return this.organization_role === 'admin';
+    }
+
+    // Check if user can manage other user within organization
+    canManageUser(targetUser) {
+        // System admin can manage anyone
+        if (this.role === 'admin') return true;
+        
+        // Organization admin can manage users in their organization OR grant access to users without organization
+        if (this.organization_role === 'admin' && this.organization_id) {
+            // Can manage users in same organization
+            if (this.organization_id === targetUser.organization_id) {
+                return true;
+            }
+            // Can grant access to users without organization
+            if (!targetUser.organization_id) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     // Verify reset token
