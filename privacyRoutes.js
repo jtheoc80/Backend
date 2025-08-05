@@ -10,9 +10,23 @@ const {
     logDataProcessing
 } = require('./privacyMiddleware');
 
+// Rate limit configuration (from environment variables, with defaults)
+const STRICT_RATE_LIMIT_WINDOW = process.env.STRICT_RATE_LIMIT_WINDOW
+    ? parseInt(process.env.STRICT_RATE_LIMIT_WINDOW, 10)
+    : 15 * 60 * 1000; // 15 minutes in ms
+const STRICT_RATE_LIMIT_MAX = process.env.STRICT_RATE_LIMIT_MAX
+    ? parseInt(process.env.STRICT_RATE_LIMIT_MAX, 10)
+    : 5; // 5 requests
+const GENERAL_RATE_LIMIT_WINDOW = process.env.GENERAL_RATE_LIMIT_WINDOW
+    ? parseInt(process.env.GENERAL_RATE_LIMIT_WINDOW, 10)
+    : 15 * 60 * 1000; // 15 minutes in ms
+const GENERAL_RATE_LIMIT_MAX = process.env.GENERAL_RATE_LIMIT_MAX
+    ? parseInt(process.env.GENERAL_RATE_LIMIT_MAX, 10)
+    : 20; // 20 requests
+
 // Rate limiting for privacy-sensitive operations
-const strictRateLimit = privacyRateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
-const generalRateLimit = privacyRateLimit(15 * 60 * 1000, 20); // 20 requests per 15 minutes
+const strictRateLimit = privacyRateLimit(STRICT_RATE_LIMIT_WINDOW, STRICT_RATE_LIMIT_MAX); // configurable
+const generalRateLimit = privacyRateLimit(GENERAL_RATE_LIMIT_WINDOW, GENERAL_RATE_LIMIT_MAX); // configurable
 
 // Public consent information (no auth required for these)
 router.get('/consent/requirements', 
