@@ -42,6 +42,4 @@ networks:
   backend:
     driver: bridge
 
-volumes:
-  uploads:
-    driver: local
+# (Removed unused uploads volume definition)
