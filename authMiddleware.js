@@ -32,7 +32,7 @@ class RateLimiter {
             if (record.count > maxAttempts) {
                 return res.status(429).json({
                     error: 'Too many attempts. Please try again later.',
-                    retryAfter: Math.ceil((windowMs - (now - record.lastAttempt)) / 1000)
+                    retryAfter: Math.ceil((windowMs - (now - record.firstAttempt)) / 1000)
                 });
             }
 
