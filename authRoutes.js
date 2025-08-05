@@ -269,7 +269,7 @@ router.post('/login', validateEmail, validatePassword, authRateLimit, async (req
         // Generate JWT token
         const jwtToken = jwt.sign(
             { email: user.email, verified: user.emailVerified },
-            process.env.JWT_SECRET || 'default-secret',
+            jwtSecret,
             { expiresIn: '24h' }
         );
 
