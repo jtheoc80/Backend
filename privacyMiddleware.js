@@ -23,7 +23,13 @@ const requireConsent = (consentType, purpose = null) => {
 
             // Check if consent is required for user's region
             const user = await db.query('SELECT data_region FROM users WHERE id = ?', [userId]);
-            const userRegion = user[0]?.data_region || 'GLOBAL';
+            if (!user || user.length === 0) {
+                return res.status(404).json({
+                    error: 'User not found',
+                    code: 'USER_NOT_FOUND'
+                });
+            }
+            const userRegion = user[0].data_region || 'GLOBAL';
             const regionConfig = privacyConfig.dataResidency[userRegion];
             
             if (regionConfig && regionConfig.requiredConsent.includes(consentType)) {
