@@ -694,15 +694,21 @@ const cleanupBlockchainRecords = async (user) => {
         // Update blockchain if user had manufacturer/distributor roles
         if (manufacturerRecords.length > 0 || distributorRecords.length > 0) {
             try {
-                await blockchainService.deactivateUserRecords({
+                await retryAsync(() => blockchainService.deactivateUserRecords({
                     userId: user.id,
                     username: user.username,
                     email: user.email,
                     manufacturerIds: manufacturerRecords.map(r => r.id),
                     distributorIds: distributorRecords.map(r => r.id)
-                });
+                }), 3, 1000);
             } catch (blockchainError) {
-                console.warn('Blockchain cleanup failed (continuing with deletion):', blockchainError);
+                console.warn('Blockchain cleanup failed after retries (continuing with deletion):', blockchainError);
+                // Log to audit log for tracking
+                await logActivity(db, user.id, 'BLOCKCHAIN_CLEANUP', {
+                    username: user.username,
+                    email: user.email,
+                    error: blockchainError.message || String(blockchainError)
+                }, 'failure');
                 // Don't fail the deletion if blockchain cleanup fails
             }
         }
