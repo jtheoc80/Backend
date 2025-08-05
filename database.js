@@ -223,7 +223,7 @@ const initDatabase = async () => {
         )`);
 
         // Add privacy-related columns to users table
-        await run(`ALTER TABLE users ADD COLUMN data_region VARCHAR(10) DEFAULT 'global'`).catch(() => {});
+        await run(`ALTER TABLE users ADD COLUMN data_region VARCHAR(10) DEFAULT 'GLOBAL'`).catch(() => {});
         await run(`ALTER TABLE users ADD COLUMN marketing_consent BOOLEAN DEFAULT 0`).catch(() => {});
         await run(`ALTER TABLE users ADD COLUMN analytics_consent BOOLEAN DEFAULT 0`).catch(() => {});
         await run(`ALTER TABLE users ADD COLUMN data_retention_date DATETIME`).catch(() => {});
