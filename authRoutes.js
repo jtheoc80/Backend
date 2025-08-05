@@ -17,4 +17,4 @@ router.post('/request_password_reset', (req, res) => {
     const { email } = req.body;
     const token = crypto.randomBytes(32).toString('hex');
 
-    // Save token to database associated with ud...
+    // Save token to database associated with the user
