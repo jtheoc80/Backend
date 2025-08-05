@@ -61,17 +61,21 @@ class Project {
         return rows.map(row => new Project(row));
     }
 
-    // Find projects assigned to a user
+    // Find projects assigned to a user using a join table
     static async findByAssignedUser(userId, organizationId = null) {
-        let sql = `SELECT * FROM projects WHERE assigned_users LIKE ?`;
-        const params = [`%${userId}%`];
+        let sql = `
+            SELECT p.* FROM projects p
+            INNER JOIN project_assignments pa ON p.id = pa.project_id
+            WHERE pa.user_id = ?
+        `;
+        const params = [userId];
         
         if (organizationId) {
-            sql += ` AND organization_id = ?`;
+            sql += ` AND p.organization_id = ?`;
             params.push(organizationId);
         }
         
-        sql += ` ORDER BY created_at DESC`;
+        sql += ` ORDER BY p.created_at DESC`;
         
         const rows = await db.query(sql, params);
         return rows.map(row => new Project(row));
