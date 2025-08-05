@@ -24,6 +24,7 @@ router.get('/regions', PrivacyController.getSupportedRegions);
 
 // Apply common middleware to authenticated privacy routes
 router.use(captureConsentContext);
+router.use(generalRateLimit);
 router.use(verifyToken);
 router.use(checkDataRetention);
 router.use(validateDataResidency);
