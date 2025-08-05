@@ -1,4 +1,6 @@
 name: ValveChain ETL Pipeline
+permissions:
+  contents: read
 
 on:
   schedule:
