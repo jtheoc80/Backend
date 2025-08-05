@@ -110,18 +110,26 @@ class PrivacyController {
     static async getConsentRequirements(req, res) {
         try {
             const userId = req.user?.id;
-            const region = req.query.region || req.user?.data_region || 'GLOBAL';
-            
-            const regionConfig = privacyConfig.dataResidency[region.toUpperCase()];
-            if (!regionConfig) {
+            // Validate and normalize region input
+            function getSupportedRegion(inputRegion) {
+                if (!inputRegion || typeof inputRegion !== 'string') return null;
+                const normalized = inputRegion.trim().toUpperCase();
+                return Object.keys(privacyConfig.dataResidency).includes(normalized) ? normalized : null;
+            }
+
+            let region = req.query.region || req.user?.data_region || 'GLOBAL';
+            const supportedRegion = getSupportedRegion(region);
+            if (!supportedRegion) {
                 return res.status(400).json({
                     error: 'Invalid region',
                     code: 'INVALID_REGION'
                 });
             }
+
+            const regionConfig = privacyConfig.dataResidency[supportedRegion];
             
             const requirements = {
-                region: region.toUpperCase(),
+                region: supportedRegion,
                 regionName: regionConfig.name,
                 regulation: regionConfig.regulation,
                 requiredConsents: regionConfig.requiredConsent || [],
