@@ -21,6 +21,8 @@ router.get('/manufacturers/:manufacturerId/distributors', distributorRateLimit, 
 
 // Valve ownership transfer routes
 router.post('/valves/transfer-ownership', distributorRateLimit, distributorController.transferValveOwnership);
+router.post('/valves/transfer-to-distributor', distributorRateLimit, distributorController.transferValveToDistributor);
+router.post('/valves/transfer-to-plant', distributorRateLimit, distributorController.transferValveToPlant);
 
 // Territory management routes
 router.get('/territories', distributorRateLimit, territoryController.getAllTerritories);

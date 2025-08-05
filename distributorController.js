@@ -520,6 +520,26 @@ const transferValveOwnership = async (req, res) => {
             });
         }
 
+        // Validate transfer limits using the enhanced business logic
+        const validation = await valve.validateTransferLimits('distributor');
+        if (!validation.canTransfer) {
+            // Log the blocked attempt for audit
+            await valve.logTransferAttempt(distributorId, 'distributor', false, validation.reason, validation.errorCode);
+            
+            // Return appropriate HTTP status based on error type
+            let statusCode = 409; // Conflict by default
+            if (validation.errorCode === 'PLANT_OWNERSHIP_FINAL') {
+                statusCode = 403; // Forbidden
+            }
+            
+            return res.status(statusCode).json({
+                success: false,
+                message: validation.reason,
+                errors: [validation.errorCode || 'Transfer limit exceeded'],
+                errorCode: validation.errorCode
+            });
+        }
+
         // Perform blockchain transfer
         const blockchainResult = await blockchainService.transferValveOwnership(
             valveTokenId,
@@ -529,6 +549,9 @@ const transferValveOwnership = async (req, res) => {
         );
 
         if (!blockchainResult.success) {
+            // Log the failed blockchain attempt
+            await valve.logTransferAttempt(distributorId, 'distributor', false, 'Blockchain transfer failed', 'BLOCKCHAIN_ERROR');
+            
             return res.status(500).json({
                 success: false,
                 message: 'Failed to transfer valve ownership on blockchain',
@@ -536,8 +559,11 @@ const transferValveOwnership = async (req, res) => {
             });
         }
 
-        // Transfer ownership in database
-        const transferResult = await valve.transferOwnership(distributorId, 'distributor', 'transfer', reason);
+        // Transfer ownership in database (skip validation since we already validated)
+        const transferResult = await valve.transferOwnership(distributorId, 'distributor', 'transfer', reason, true);
+
+        // Log successful transfer for audit
+        await valve.logTransferAttempt(distributorId, 'distributor', true, reason);
 
         // await logActivity(null, 'valve_ownership_transferred', { 
         //     valveTokenId,
@@ -562,9 +588,251 @@ const transferValveOwnership = async (req, res) => {
 
     } catch (error) {
         console.error('Transfer valve ownership error:', error);
+        
+        // Log error attempt if we have valve info
+        if (req.body.valveTokenId && req.body.distributorId) {
+            try {
+                const valve = await Valve.findByTokenId(req.body.valveTokenId);
+                if (valve) {
+                    await valve.logTransferAttempt(req.body.distributorId, 'distributor', false, error.message, 'INTERNAL_ERROR');
+                }
+            } catch (logError) {
+                console.error('Error logging failed attempt:', logError);
+            }
+        }
+        
         res.status(500).json({
             success: false,
             message: 'Internal server error during valve ownership transfer',
+            errors: ['An unexpected error occurred. Please try again.']
+        });
+    }
+};
+
+// Transfer valve ownership between distributors
+const transferValveToDistributor = async (req, res) => {
+    try {
+        const { valveTokenId, toDistributorId, fromDistributorId, reason } = req.body;
+
+        if (!valveTokenId || !toDistributorId || !fromDistributorId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Valve token ID, to distributor ID, and from distributor ID are required',
+                errors: ['Missing required fields']
+            });
+        }
+
+        // Validate from distributor
+        const fromDistributor = await Distributor.findById(fromDistributorId);
+        if (!fromDistributor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Source distributor not found',
+                errors: ['Invalid from distributor ID']
+            });
+        }
+
+        // Validate to distributor
+        const toDistributor = await Distributor.findById(toDistributorId);
+        if (!toDistributor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Target distributor not found',
+                errors: ['Invalid to distributor ID']
+            });
+        }
+
+        // Find valve
+        const valve = await Valve.findByTokenId(valveTokenId);
+        if (!valve) {
+            return res.status(404).json({
+                success: false,
+                message: 'Valve not found',
+                errors: ['Invalid token ID']
+            });
+        }
+
+        // Verify from distributor owns the valve
+        if (valve.current_owner_id !== fromDistributorId || valve.current_owner_type !== 'distributor') {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only transfer valves you own',
+                errors: ['Access denied']
+            });
+        }
+
+        // Validate transfer limits using the enhanced business logic
+        const validation = await valve.validateTransferLimits('distributor');
+        if (!validation.canTransfer) {
+            // Log the blocked attempt for audit
+            await valve.logTransferAttempt(toDistributorId, 'distributor', false, validation.reason, validation.errorCode);
+            
+            // Return appropriate HTTP status based on error type
+            let statusCode = 409; // Conflict by default
+            if (validation.errorCode === 'PLANT_OWNERSHIP_FINAL') {
+                statusCode = 403; // Forbidden
+            }
+            
+            return res.status(statusCode).json({
+                success: false,
+                message: validation.reason,
+                errors: [validation.errorCode || 'Transfer limit exceeded'],
+                errorCode: validation.errorCode
+            });
+        }
+
+        // Perform blockchain transfer
+        const blockchainResult = await blockchainService.transferValveOwnership(
+            valveTokenId,
+            fromDistributorId,
+            toDistributorId,
+            'distributor'
+        );
+
+        if (!blockchainResult.success) {
+            // Log the failed blockchain attempt
+            await valve.logTransferAttempt(toDistributorId, 'distributor', false, 'Blockchain transfer failed', 'BLOCKCHAIN_ERROR');
+            
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to transfer valve ownership on blockchain',
+                errors: [blockchainResult.error || 'Blockchain transfer failed']
+            });
+        }
+
+        // Transfer ownership in database (skip validation since we already validated)
+        const transferResult = await valve.transferOwnership(toDistributorId, 'distributor', 'transfer', reason, true);
+
+        // Log successful transfer for audit
+        await valve.logTransferAttempt(toDistributorId, 'distributor', true, reason);
+
+        res.json({
+            success: true,
+            data: {
+                valve: await Valve.findByTokenId(valveTokenId).then(v => v.toJSON()),
+                transfer: transferResult
+            },
+            blockchainTransaction: {
+                hash: blockchainResult.transactionHash,
+                blockNumber: blockchainResult.blockNumber
+            },
+            message: 'Valve ownership transferred successfully between distributors'
+        });
+
+    } catch (error) {
+        console.error('Transfer valve between distributors error:', error);
+        
+        // Log error attempt if we have valve info
+        if (req.body.valveTokenId && req.body.toDistributorId) {
+            try {
+                const valve = await Valve.findByTokenId(req.body.valveTokenId);
+                if (valve) {
+                    await valve.logTransferAttempt(req.body.toDistributorId, 'distributor', false, error.message, 'INTERNAL_ERROR');
+                }
+            } catch (logError) {
+                console.error('Error logging failed attempt:', logError);
+            }
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error during valve ownership transfer',
+            errors: ['An unexpected error occurred. Please try again.']
+        });
+    }
+};
+
+// Transfer valve ownership to plant (final transfer)
+const transferValveToPlant = async (req, res) => {
+    try {
+        const { valveTokenId, plantId, currentOwnerId, currentOwnerType, reason } = req.body;
+
+        if (!valveTokenId || !plantId || !currentOwnerId || !currentOwnerType) {
+            return res.status(400).json({
+                success: false,
+                message: 'Valve token ID, plant ID, current owner ID, and current owner type are required',
+                errors: ['Missing required fields']
+            });
+        }
+
+        // Find valve
+        const valve = await Valve.findByTokenId(valveTokenId);
+        if (!valve) {
+            return res.status(404).json({
+                success: false,
+                message: 'Valve not found',
+                errors: ['Invalid token ID']
+            });
+        }
+
+        // Verify current owner owns the valve
+        if (valve.current_owner_id !== currentOwnerId || valve.current_owner_type !== currentOwnerType) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only transfer valves you own',
+                errors: ['Access denied']
+            });
+        }
+
+        // Plant transfers are always allowed (no limits apply)
+        // This is the terminal state for valve ownership
+
+        // Perform blockchain transfer
+        const blockchainResult = await blockchainService.transferValveOwnership(
+            valveTokenId,
+            currentOwnerId,
+            plantId,
+            'plant'
+        );
+
+        if (!blockchainResult.success) {
+            // Log the failed blockchain attempt
+            await valve.logTransferAttempt(plantId, 'plant', false, 'Blockchain transfer failed', 'BLOCKCHAIN_ERROR');
+            
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to transfer valve ownership on blockchain',
+                errors: [blockchainResult.error || 'Blockchain transfer failed']
+            });
+        }
+
+        // Transfer ownership in database (skip validation since plant transfers are always allowed)
+        const transferResult = await valve.transferOwnership(plantId, 'plant', 'transfer', reason, true);
+
+        // Log successful transfer for audit
+        await valve.logTransferAttempt(plantId, 'plant', true, reason);
+
+        res.json({
+            success: true,
+            data: {
+                valve: await Valve.findByTokenId(valveTokenId).then(v => v.toJSON()),
+                transfer: transferResult
+            },
+            blockchainTransaction: {
+                hash: blockchainResult.transactionHash,
+                blockNumber: blockchainResult.blockNumber
+            },
+            message: 'Valve ownership transferred to plant successfully. No further transfers are allowed.'
+        });
+
+    } catch (error) {
+        console.error('Transfer valve to plant error:', error);
+        
+        // Log error attempt if we have valve info
+        if (req.body.valveTokenId && req.body.plantId) {
+            try {
+                const valve = await Valve.findByTokenId(req.body.valveTokenId);
+                if (valve) {
+                    await valve.logTransferAttempt(req.body.plantId, 'plant', false, error.message, 'INTERNAL_ERROR');
+                }
+            } catch (logError) {
+                console.error('Error logging failed attempt:', logError);
+            }
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error during valve ownership transfer to plant',
             errors: ['An unexpected error occurred. Please try again.']
         });
     }
@@ -579,5 +847,7 @@ module.exports = {
     assignDistributorRights,
     revokeDistributorRights,
     getManufacturerDistributors,
-    transferValveOwnership
+    transferValveOwnership,
+    transferValveToDistributor,
+    transferValveToPlant
 };

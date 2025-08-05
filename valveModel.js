@@ -111,8 +111,16 @@ class Valve {
     }
 
     // Transfer valve ownership
-    async transferOwnership(toOwnerId, toOwnerType, transferType = 'transfer', reason = null) {
+    async transferOwnership(toOwnerId, toOwnerType, transferType = 'transfer', reason = null, skipValidation = false) {
         const { db: database } = require('./database');
+        
+        // Validate transfer limits unless explicitly skipping validation
+        if (!skipValidation) {
+            const validation = await this.validateTransferLimits(toOwnerType);
+            if (!validation.canTransfer) {
+                throw new Error(`Transfer blocked: ${validation.reason}`);
+            }
+        }
         
         // Start transaction
         await database.run('BEGIN TRANSACTION');
@@ -174,6 +182,113 @@ class Valve {
         
         // Additional business logic can be added here
         return { canTransfer: true };
+    }
+
+    // Get total transfer count for this valve
+    async getTotalTransferCount() {
+        const sql = `SELECT COUNT(*) as count FROM valve_ownership_transfers 
+                     WHERE valve_id = ? AND is_completed = 1`;
+        const rows = await db.query(sql, [this.id]);
+        return rows[0].count;
+    }
+
+    // Get manufacturer to distributor transfer count for this valve
+    async getManufacturerTransferCount() {
+        const sql = `SELECT COUNT(*) as count FROM valve_ownership_transfers 
+                     WHERE valve_id = ? AND from_owner_type = 'manufacturer' 
+                     AND to_owner_type = 'distributor' AND is_completed = 1`;
+        const rows = await db.query(sql, [this.id]);
+        return rows[0].count;
+    }
+
+    // Get distributor to distributor transfer count for this valve
+    async getDistributorTransferCount() {
+        const sql = `SELECT COUNT(*) as count FROM valve_ownership_transfers 
+                     WHERE valve_id = ? AND from_owner_type = 'distributor' 
+                     AND to_owner_type = 'distributor' AND is_completed = 1`;
+        const rows = await db.query(sql, [this.id]);
+        return rows[0].count;
+    }
+
+    // Check if valve is currently owned by a plant
+    isOwnedByPlant() {
+        return this.current_owner_type === 'plant';
+    }
+
+    // Comprehensive validation for transfer limits
+    async validateTransferLimits(toOwnerType, fromOwnerType = null) {
+        const currentFromType = fromOwnerType || this.current_owner_type;
+        
+        // Rule 1: No transfers allowed if valve is owned by plant
+        if (this.isOwnedByPlant()) {
+            return {
+                canTransfer: false,
+                reason: 'No ownership transfers are allowed once a valve is transferred to a plant',
+                errorCode: 'PLANT_OWNERSHIP_FINAL'
+            };
+        }
+
+        // Rule 2: Check manufacturer transfer limit (1 transfer max)
+        if (currentFromType === 'manufacturer' && toOwnerType === 'distributor') {
+            const manufacturerTransfers = await this.getManufacturerTransferCount();
+            if (manufacturerTransfers >= 1) {
+                return {
+                    canTransfer: false,
+                    reason: 'Manufacturer can only transfer ownership of a valve to a distributor once per valve serial number',
+                    errorCode: 'MANUFACTURER_TRANSFER_LIMIT_EXCEEDED'
+                };
+            }
+        }
+
+        // Rule 3: Check distributor transfer limit (2 transfers max)
+        if (currentFromType === 'distributor' && toOwnerType === 'distributor') {
+            const distributorTransfers = await this.getDistributorTransferCount();
+            if (distributorTransfers >= 2) {
+                return {
+                    canTransfer: false,
+                    reason: 'Distributors have a combined total of two ownership transfers per valve serial number among themselves',
+                    errorCode: 'DISTRIBUTOR_TRANSFER_LIMIT_EXCEEDED'
+                };
+            }
+        }
+
+        // Rule 4: Check global transfer cap (3 transfers max before plant)
+        if (toOwnerType !== 'plant') {
+            const totalTransfers = await this.getTotalTransferCount();
+            if (totalTransfers >= 3) {
+                return {
+                    canTransfer: false,
+                    reason: 'Valve has reached the maximum of three ownership transfers. It can only be transferred to a plant now',
+                    errorCode: 'GLOBAL_TRANSFER_LIMIT_EXCEEDED'
+                };
+            }
+        }
+
+        return { canTransfer: true };
+    }
+
+    // Log transfer attempt for audit purposes
+    async logTransferAttempt(toOwnerId, toOwnerType, success, reason = null, errorCode = null) {
+        const { db: database } = require('./database');
+        
+        try {
+            const logSql = `INSERT INTO valve_ownership_transfers (
+                valve_id, from_owner_id, from_owner_type, to_owner_id, to_owner_type,
+                transfer_type, reason, is_completed, blockchain_transaction_hash
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            
+            const auditReason = success ? reason : `BLOCKED: ${reason} (${errorCode || 'VALIDATION_FAILED'})`;
+            const transactionHash = success ? Valve.generateTransactionHash() : null;
+            
+            await database.run(logSql, [
+                this.id, this.current_owner_id, this.current_owner_type,
+                toOwnerId, toOwnerType, 'transfer', auditReason, success ? 1 : 0, transactionHash
+            ]);
+            
+        } catch (error) {
+            console.error('Error logging transfer attempt:', error);
+            // Don't throw - audit logging shouldn't break the main flow
+        }
     }
 
     // Get valves by manufacturer

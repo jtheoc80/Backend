@@ -142,9 +142,9 @@ const initDatabase = async () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             valve_id INTEGER NOT NULL,
             from_owner_id VARCHAR(50) NOT NULL,
-            from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor')),
+            from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor', 'plant')),
             to_owner_id VARCHAR(50) NOT NULL,
-            to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor')),
+            to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor', 'plant')),
             transfer_type VARCHAR(20) NOT NULL CHECK (transfer_type IN ('initial_assignment', 'transfer', 'revoke')),
             blockchain_transaction_hash VARCHAR(66),
             reason TEXT,
@@ -155,7 +155,7 @@ const initDatabase = async () => {
 
         // Add columns to valves table for ownership tracking
         await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
-        await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor'))`).catch(() => {});
+        await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor', 'plant'))`).catch(() => {});
 
         // Purchase Orders table
         await run(`CREATE TABLE IF NOT EXISTS purchase_orders (
