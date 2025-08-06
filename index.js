@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const userRoutes = require('./userRoutes');
 const auditLogsRoute = require('./auditLogsRoute');
 const manufacturerRoutes = require('./manufacturerRoutes');
@@ -12,7 +13,26 @@ const { metricsMiddleware, healthCheckWithMetrics } = require('./metrics');
 // Load environment variables
 require('dotenv').config();
 
+// Define allowed origins for CORS
+// ALLOWED_ORIGINS should be set in environment as comma-separated list (e.g., "http://localhost:3000,https://example.com")
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+
 const app = express();
+
+// Configure CORS with allowed origins
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.length === 0) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 
 // Request logging and metrics middleware
 app.use(requestLogger);
