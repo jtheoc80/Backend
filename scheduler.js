@@ -346,7 +346,7 @@ class ValveGPTScheduler {
             if (this.isRunning) {
                 console.log('Waiting for running process to complete...');
                 let attempts = 0;
-                while (this.isRunning && attempts < 30) { // Wait up to 30 seconds
+                while (this.isRunning && attempts < this.shutdownTimeoutSeconds) { // Wait up to shutdownTimeoutSeconds
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     attempts++;
                 }
