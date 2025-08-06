@@ -18,8 +18,7 @@ class ValveGPTScheduler {
             totalEmbeddingsGenerated: 0
         };
 
-        // Default schedule: Every 6 hours
-        this.defaultSchedule = '0 */6 * * *';
+        this.defaultSchedule = DEFAULT_SCHEDULE;
     }
 
     /**
