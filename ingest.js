@@ -12,7 +12,7 @@ class ValveContentIngestor {
         // Configuration
         this.embeddingModel = 'text-embedding-3-small';
         this.summaryModel = 'gpt-3.5-turbo';
-        this.maxContentLength = 8000; // Max chars for OpenAI processing
+        this.maxContentLength = parseInt(process.env.MAX_CONTENT_LENGTH, 10) || 8000; // Max chars for OpenAI processing (configurable via env)
         this.batchSize = 10; // Process in batches
     }
 
