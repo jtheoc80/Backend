@@ -142,7 +142,7 @@ Add these variables to your `.env` file:
 
 ```env
 # CORS Configuration
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:4200,http://localhost:5173
+ALLOWED_ORIGINS=http://localhost:3001,http://localhost:4200,http://localhost:5173
 
 # Set to 'production' to restrict CORS to ALLOWED_ORIGINS only
 NODE_ENV=development
