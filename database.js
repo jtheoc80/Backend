@@ -68,6 +68,19 @@ const initDatabase = async () => {
             await run(`CREATE INDEX IF NOT EXISTS idx_users_is_verified ON users(is_verified)`);
         });
 
+        // Add is_active column to users table for frontend compatibility
+        await runMigration('add_users_is_active_column', async () => {
+            // Check if column exists before adding
+            const columns = await query(`PRAGMA table_info(users)`);
+            const columnNames = columns.map(col => col.name);
+            
+            if (!columnNames.includes('is_active')) {
+                await run(`ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1`);
+                // Create index for the new column
+                await run(`CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active)`);
+            }
+        });
+
         // Audit logs table - Updated for cross-database compatibility
         await runMigration('create_audit_logs_table', async () => {
             await run(`CREATE TABLE IF NOT EXISTS audit_logs (

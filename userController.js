@@ -308,7 +308,7 @@ const getUserById = async (req, res) => {
 const updateUserById = async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
-        const { username, email, role, is_verified } = req.body;
+        const { username, email, role, is_verified, is_active } = req.body;
 
         const user = await User.findById(userId);
         if (!user) {
@@ -321,12 +321,32 @@ const updateUserById = async (req, res) => {
         if (username) updateData.username = username;
         if (email) updateData.email = email;
         if (role && ['admin', 'user'].includes(role)) updateData.role = role;
-        if (typeof is_verified === 'boolean') updateData.is_verified = is_verified ? 1 : 0;
+        if (typeof is_verified === 'boolean') updateData.is_verified = is_verified;
+        if (typeof is_active === 'boolean') updateData.is_active = is_active;
 
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({
                 error: 'No valid fields to update.'
             });
+        }
+
+        // Check for existing username/email conflicts
+        if (username && username !== user.username) {
+            const existingUser = await User.findByUsername(username);
+            if (existingUser && existingUser.id !== user.id) {
+                return res.status(409).json({
+                    error: 'Username already taken.'
+                });
+            }
+        }
+
+        if (email && email !== user.email) {
+            const existingUser = await User.findByEmail(email);
+            if (existingUser && existingUser.id !== user.id) {
+                return res.status(409).json({
+                    error: 'Email already in use.'
+                });
+            }
         }
 
         await user.update(updateData);

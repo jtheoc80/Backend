@@ -11,6 +11,7 @@ class User {
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
         this.is_verified = data.is_verified || 0;
+        this.is_active = data.is_active !== undefined ? data.is_active : 1;
         this.reset_token = data.reset_token;
         this.reset_token_expires = data.reset_token_expires;
     }
@@ -79,14 +80,20 @@ class User {
 
     // Update user
     async update(updateData) {
-        const allowedFields = ['username', 'email', 'role', 'is_verified'];
+        const allowedFields = ['username', 'email', 'role', 'is_verified', 'is_active'];
         const updates = [];
         const values = [];
 
         for (const [key, value] of Object.entries(updateData)) {
             if (allowedFields.includes(key)) {
-                updates.push(`${key} = ?`);
-                values.push(value);
+                // Convert boolean values to integers for database storage
+                if (key === 'is_verified' || key === 'is_active') {
+                    updates.push(`${key} = ?`);
+                    values.push(value ? 1 : 0);
+                } else {
+                    updates.push(`${key} = ?`);
+                    values.push(value);
+                }
             }
         }
 
@@ -163,10 +170,16 @@ class User {
         return new User(rows[0]);
     }
 
-    // JSON representation (without password)
+    // JSON representation (without password) with proper boolean conversion
     toJSON() {
         const { password, reset_token, reset_token_expires, ...userWithoutSensitiveData } = this;
-        return userWithoutSensitiveData;
+        
+        // Convert INTEGER status flags to booleans for frontend compatibility
+        return {
+            ...userWithoutSensitiveData,
+            is_verified: Boolean(userWithoutSensitiveData.is_verified),
+            is_active: Boolean(userWithoutSensitiveData.is_active)
+        };
     }
 }
 

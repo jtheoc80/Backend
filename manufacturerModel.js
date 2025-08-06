@@ -53,14 +53,14 @@ class Manufacturer {
         return this.hasPermission('tokenize_valves');
     }
 
-    // JSON representation
+    // JSON representation with proper boolean conversion
     toJSON() {
         return {
             id: this.id,
             name: this.name,
             wallet_address: this.wallet_address,
             permissions: this.permissions,
-            is_active: this.is_active,
+            is_active: Boolean(this.is_active),
             created_at: this.created_at,
             updated_at: this.updated_at
         };

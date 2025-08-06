@@ -138,7 +138,7 @@ class Distributor {
         return rows[0].count > 0;
     }
 
-    // JSON representation
+    // JSON representation with proper boolean conversion
     toJSON() {
         return {
             id: this.id,
@@ -148,7 +148,7 @@ class Distributor {
             contactPhone: this.contact_phone,
             address: this.address,
             blockchainRegistrationHash: this.blockchain_registration_hash,
-            isActive: this.is_active,
+            isActive: Boolean(this.is_active),
             created_at: this.created_at,
             updated_at: this.updated_at
         };
