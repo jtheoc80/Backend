@@ -57,6 +57,11 @@ spec:
             secretKeyRef:
               name: valvechain-secrets
               key: JWT_SECRET
+        - name: PINECONE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: valvechain-secrets
+              key: PINECONE_API_KEY
         resources:
           limits:
             cpu: "1000m"

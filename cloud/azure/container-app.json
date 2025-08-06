@@ -108,6 +108,10 @@
                 {
                   "name": "JWT_SECRET",
                   "secretRef": "jwt-secret"
+                },
+                {
+                  "name": "PINECONE_API_KEY",
+                  "secretRef": "pinecone-api-key"
                 }
               ],
               "resources": {

@@ -16,6 +16,7 @@ services:
       - PO_CONTRACT_ADDRESS=${PO_CONTRACT_ADDRESS}
       - FEE_WALLET_ADDRESS=${FEE_WALLET_ADDRESS}
       - JWT_SECRET=${JWT_SECRET:-default-jwt-secret-for-dev}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
       - DB_PATH=/app/data/users.db
     volumes:
       - ./data:/app/data
