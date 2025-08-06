@@ -76,11 +76,11 @@ class MetricsCollector {
     }
 
     startMetricsCollection() {
-        // Log metrics every 5 minutes
+        // Log metrics every 6 hours
         setInterval(() => {
             const metrics = this.getMetrics();
             logger.info('Application metrics', { metrics });
-        }, 5 * 60 * 1000);
+        }, 6 * 60 * 60 * 1000);
     }
 }
 
