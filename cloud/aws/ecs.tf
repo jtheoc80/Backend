@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name      = "PINECONE_API_KEY"
-          valueFrom = aws_secretsmanager_secret.app_secrets.arn
+          valueFrom = "${aws_secretsmanager_secret.app_secrets.arn}:PINECONE_API_KEY::"
         }
       ]
 
