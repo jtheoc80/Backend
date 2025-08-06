@@ -30,212 +30,255 @@ const run = (sql, params = []) => {
     });
 };
 
+// Migration helper functions
+const runMigration = async (migrationName, migrationFunc) => {
+    console.log(`Running migration: ${migrationName}`);
+    try {
+        await migrationFunc();
+        console.log(`✓ Migration ${migrationName} completed successfully`);
+    } catch (error) {
+        console.error(`✗ Migration ${migrationName} failed:`, error);
+        throw error;
+    }
+};
+
 // Initialize database tables async
 const initDatabase = async () => {
+    console.log('Initializing database with cross-database compatibility improvements...');
     try {
-        // Users table
-        await run(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            role VARCHAR(20) DEFAULT 'user',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            is_verified BOOLEAN DEFAULT 0,
-            reset_token VARCHAR(255),
-            reset_token_expires DATETIME
-        )`);
+        // Users table - Updated for cross-database compatibility
+        await runMigration('create_users_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(20) DEFAULT 'user',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                is_verified INTEGER DEFAULT 0,
+                reset_token VARCHAR(255),
+                reset_token_expires DATETIME
+            )`);
+            
+            // Create indexes for users table
+            await run(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_users_is_verified ON users(is_verified)`);
+        });
 
-        // Audit logs table  
-        await run(`CREATE TABLE IF NOT EXISTS audit_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            action VARCHAR(100) NOT NULL,
-            metadata TEXT,
-            outcome VARCHAR(50),
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )`);
+        // Audit logs table - Updated for cross-database compatibility
+        await runMigration('create_audit_logs_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                action VARCHAR(100) NOT NULL,
+                metadata TEXT,
+                outcome VARCHAR(50),
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+            )`);
+            
+            // Create indexes for audit_logs table
+            await run(`CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs(user_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_audit_outcome ON audit_logs(outcome)`);
+        });
 
-        // Manufacturers table
-        await run(`CREATE TABLE IF NOT EXISTS manufacturers (
-            id VARCHAR(50) PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            wallet_address VARCHAR(42) UNIQUE,
-            permissions TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        // Manufacturers table - Updated for cross-database compatibility
+        await runMigration('create_manufacturers_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS manufacturers (
+                id VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                wallet_address VARCHAR(42) UNIQUE,
+                permissions TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
+            
+            // Create indexes for manufacturers table
+            await run(`CREATE INDEX IF NOT EXISTS idx_manufacturers_wallet_address ON manufacturers(wallet_address)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_manufacturers_is_active ON manufacturers(is_active)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_manufacturers_name ON manufacturers(name)`);
+        });
 
-        // Valves table
-        await run(`CREATE TABLE IF NOT EXISTS valves (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            token_id VARCHAR(50) UNIQUE NOT NULL,
-            valve_id VARCHAR(100) UNIQUE NOT NULL,
-            serial_number VARCHAR(255) UNIQUE NOT NULL,
-            type VARCHAR(50) NOT NULL,
-            manufacturer_id VARCHAR(50) NOT NULL,
-            model VARCHAR(255) NOT NULL,
-            diameter REAL NOT NULL,
-            pressure REAL NOT NULL,
-            temperature REAL NOT NULL,
-            material VARCHAR(255) NOT NULL,
-            connection_type VARCHAR(255) NOT NULL,
-            flow_coefficient REAL,
-            manufacture_date DATE NOT NULL,
-            warranty_months INTEGER DEFAULT 12,
-            certifications TEXT,
-            transaction_hash VARCHAR(66),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
-        )`);
+        // Valves table - Updated for cross-database compatibility
+        await runMigration('create_valves_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS valves (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                token_id VARCHAR(50) UNIQUE NOT NULL,
+                valve_id VARCHAR(100) UNIQUE NOT NULL,
+                serial_number VARCHAR(255) UNIQUE NOT NULL,
+                type VARCHAR(50) NOT NULL,
+                manufacturer_id VARCHAR(50) NOT NULL,
+                model VARCHAR(255) NOT NULL,
+                diameter REAL NOT NULL,
+                pressure REAL NOT NULL,
+                temperature REAL NOT NULL,
+                material VARCHAR(255) NOT NULL,
+                connection_type VARCHAR(255) NOT NULL,
+                flow_coefficient REAL,
+                manufacture_date DATE NOT NULL,
+                warranty_months INTEGER DEFAULT 12,
+                certifications TEXT,
+                transaction_hash VARCHAR(66),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id) ON DELETE CASCADE ON UPDATE CASCADE
+            )`);
+            
+            // Create indexes for valves table
+            await run(`CREATE INDEX IF NOT EXISTS idx_valves_token_id ON valves(token_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_valves_valve_id ON valves(valve_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_valves_serial_number ON valves(serial_number)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_valves_manufacturer_id ON valves(manufacturer_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_valves_type ON valves(type)`);
+        });
 
-        // Distributors table
-        await run(`CREATE TABLE IF NOT EXISTS distributors (
-            id VARCHAR(50) PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            wallet_address VARCHAR(42) UNIQUE,
-            contact_email VARCHAR(255),
-            contact_phone VARCHAR(50),
-            address TEXT,
-            blockchain_registration_hash VARCHAR(66),
-            is_active BOOLEAN DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        // Distributors table - Updated for cross-database compatibility
+        await runMigration('create_distributors_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS distributors (
+                id VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                wallet_address VARCHAR(42) UNIQUE,
+                contact_email VARCHAR(255),
+                contact_phone VARCHAR(50),
+                address TEXT,
+                blockchain_registration_hash VARCHAR(66),
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
+            
+            // Create indexes for distributors table
+            await run(`CREATE INDEX IF NOT EXISTS idx_distributors_wallet_address ON distributors(wallet_address)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_distributors_is_active ON distributors(is_active)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_distributors_name ON distributors(name)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_distributors_contact_email ON distributors(contact_email)`);
+        });
 
-        // Territories table for geographical scoping
-        await run(`CREATE TABLE IF NOT EXISTS territories (
-            id VARCHAR(50) PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            type VARCHAR(20) NOT NULL CHECK (type IN ('global', 'region', 'territory')),
-            parent_id VARCHAR(50),
-            description TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES territories(id)
-        )`);
+        // Territories table - Updated for cross-database compatibility
+        await runMigration('create_territories_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS territories (
+                id VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                type VARCHAR(20) NOT NULL CHECK (type IN ('global', 'region', 'territory')),
+                parent_id VARCHAR(50),
+                description TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (parent_id) REFERENCES territories(id) ON DELETE SET NULL ON UPDATE CASCADE
+            )`);
+            
+            // Create indexes for territories table
+            await run(`CREATE INDEX IF NOT EXISTS idx_territories_type ON territories(type)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_territories_parent_id ON territories(parent_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_territories_is_active ON territories(is_active)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_territories_name ON territories(name)`);
+        });
 
-        // Manufacturer-Distributor relationships table
-        await run(`CREATE TABLE IF NOT EXISTS manufacturer_distributor_relationships (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            manufacturer_id VARCHAR(50) NOT NULL,
-            distributor_id VARCHAR(50) NOT NULL,
-            territory_id VARCHAR(50) NOT NULL,
-            permissions TEXT,
-            contract_address VARCHAR(42),
-            blockchain_assignment_hash VARCHAR(66),
-            is_active BOOLEAN DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id),
-            FOREIGN KEY (distributor_id) REFERENCES distributors(id),
-            FOREIGN KEY (territory_id) REFERENCES territories(id),
-            UNIQUE(manufacturer_id, distributor_id, territory_id)
-        )`);
+        // Manufacturer-Distributor relationships table - Updated for cross-database compatibility
+        await runMigration('create_manufacturer_distributor_relationships_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS manufacturer_distributor_relationships (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                manufacturer_id VARCHAR(50) NOT NULL,
+                distributor_id VARCHAR(50) NOT NULL,
+                territory_id VARCHAR(50) NOT NULL,
+                permissions TEXT,
+                contract_address VARCHAR(42),
+                blockchain_assignment_hash VARCHAR(66),
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (territory_id) REFERENCES territories(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                UNIQUE(manufacturer_id, distributor_id, territory_id)
+            )`);
+            
+            // Create indexes for manufacturer_distributor_relationships table
+            await run(`CREATE INDEX IF NOT EXISTS idx_mdr_manufacturer ON manufacturer_distributor_relationships(manufacturer_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_mdr_distributor ON manufacturer_distributor_relationships(distributor_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_mdr_territory ON manufacturer_distributor_relationships(territory_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_mdr_is_active ON manufacturer_distributor_relationships(is_active)`);
+        });
 
-        // Valve ownership transfers table (this will be recreated later with plant support)
-        await run(`CREATE TABLE IF NOT EXISTS valve_ownership_transfers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            valve_id INTEGER NOT NULL,
-            from_owner_id VARCHAR(50) NOT NULL,
-            from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor')),
-            to_owner_id VARCHAR(50) NOT NULL,
-            to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor')),
-            transfer_type VARCHAR(20) NOT NULL CHECK (transfer_type IN ('initial_assignment', 'transfer', 'revoke')),
-            blockchain_transaction_hash VARCHAR(66),
-            reason TEXT,
-            is_completed BOOLEAN DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (valve_id) REFERENCES valves(id)
-        )`);
+        // Valve ownership transfers table - Updated for cross-database compatibility
+        await runMigration('create_valve_ownership_transfers_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS valve_ownership_transfers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                valve_id INTEGER NOT NULL,
+                from_owner_id VARCHAR(50) NOT NULL,
+                from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor', 'plant')),
+                to_owner_id VARCHAR(50) NOT NULL,
+                to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor', 'plant')),
+                transfer_type VARCHAR(20) NOT NULL CHECK (transfer_type IN ('initial_assignment', 'transfer', 'revoke')),
+                blockchain_transaction_hash VARCHAR(66),
+                reason TEXT,
+                is_completed INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (valve_id) REFERENCES valves(id) ON DELETE CASCADE ON UPDATE CASCADE
+            )`);
+            
+            // Create indexes for valve_ownership_transfers table
+            await run(`CREATE INDEX IF NOT EXISTS idx_vot_valve_id ON valve_ownership_transfers(valve_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_vot_from_owner ON valve_ownership_transfers(from_owner_id, from_owner_type)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_vot_to_owner ON valve_ownership_transfers(to_owner_id, to_owner_type)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_vot_is_completed ON valve_ownership_transfers(is_completed)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_vot_transfer_type ON valve_ownership_transfers(transfer_type)`);
+        });
 
-        // Add columns to valves table for ownership tracking
-        await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`).catch(() => {});
-        await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer'`).catch(() => {});
+        // Add ownership tracking columns to valves table if they don't exist
+        await runMigration('add_valve_ownership_columns', async () => {
+            // Check if columns exist before adding
+            const columns = await query(`PRAGMA table_info(valves)`);
+            const columnNames = columns.map(col => col.name);
+            
+            if (!columnNames.includes('current_owner_id')) {
+                await run(`ALTER TABLE valves ADD COLUMN current_owner_id VARCHAR(50)`);
+            }
+            
+            if (!columnNames.includes('current_owner_type')) {
+                await run(`ALTER TABLE valves ADD COLUMN current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor', 'plant'))`);
+            }
+            
+            // Create index for ownership columns
+            await run(`CREATE INDEX IF NOT EXISTS idx_valves_current_owner ON valves(current_owner_id, current_owner_type)`);
+        });
 
-        // Update existing CHECK constraints to allow 'plant' owner type
-        // First, we need to recreate the valve_ownership_transfers table with the new constraints
-        await run(`CREATE TABLE IF NOT EXISTS valve_ownership_transfers_new (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            valve_id INTEGER NOT NULL,
-            from_owner_id VARCHAR(50) NOT NULL,
-            from_owner_type VARCHAR(20) NOT NULL CHECK (from_owner_type IN ('manufacturer', 'distributor', 'plant')),
-            to_owner_id VARCHAR(50) NOT NULL,
-            to_owner_type VARCHAR(20) NOT NULL CHECK (to_owner_type IN ('manufacturer', 'distributor', 'plant')),
-            transfer_type VARCHAR(20) NOT NULL CHECK (transfer_type IN ('initial_assignment', 'transfer', 'revoke')),
-            blockchain_transaction_hash VARCHAR(66),
-            reason TEXT,
-            is_completed BOOLEAN DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (valve_id) REFERENCES valves(id)
-        )`).catch(() => {});
-
-        // Copy existing data
-        await run(`INSERT OR IGNORE INTO valve_ownership_transfers_new 
-                   SELECT * FROM valve_ownership_transfers`).catch(() => {});
-
-        // Drop the old table and rename the new one
-        await run(`DROP TABLE IF EXISTS valve_ownership_transfers`).catch(() => {});
-        await run(`ALTER TABLE valve_ownership_transfers_new RENAME TO valve_ownership_transfers`).catch(() => {});
-
-        // Also update the valves table constraint
-        await run(`CREATE TABLE IF NOT EXISTS valves_new (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            token_id VARCHAR(50) UNIQUE NOT NULL,
-            valve_id VARCHAR(100) UNIQUE NOT NULL,
-            serial_number VARCHAR(255) UNIQUE NOT NULL,
-            type VARCHAR(50) NOT NULL,
-            manufacturer_id VARCHAR(50) NOT NULL,
-            model VARCHAR(255) NOT NULL,
-            diameter REAL NOT NULL,
-            pressure REAL NOT NULL,
-            temperature REAL NOT NULL,
-            material VARCHAR(255) NOT NULL,
-            connection_type VARCHAR(255) NOT NULL,
-            flow_coefficient REAL,
-            manufacture_date DATE NOT NULL,
-            warranty_months INTEGER DEFAULT 12,
-            certifications TEXT,
-            transaction_hash VARCHAR(66),
-            current_owner_id VARCHAR(50),
-            current_owner_type VARCHAR(20) DEFAULT 'manufacturer' CHECK (current_owner_type IN ('manufacturer', 'distributor', 'plant')),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
-        )`).catch(() => {});
-
-        // Copy existing valves data
-        await run(`INSERT OR IGNORE INTO valves_new 
-                   SELECT * FROM valves`).catch(() => {});
-
-        // Drop the old valves table and rename the new one
-        await run(`DROP TABLE IF EXISTS valves`).catch(() => {});
-        await run(`ALTER TABLE valves_new RENAME TO valves`).catch(() => {});
-
-        // Purchase Orders table
-        await run(`CREATE TABLE IF NOT EXISTS purchase_orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            po_number VARCHAR(100) UNIQUE NOT NULL,
-            manufacturer_id VARCHAR(50) NOT NULL,
-            distributor_id VARCHAR(50) NOT NULL,
-            total_amount DECIMAL(10,2) NOT NULL,
-            currency VARCHAR(3) DEFAULT 'USD',
-            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
-            items TEXT NOT NULL,
-            notes TEXT,
-            approved_by INTEGER,
-            approved_at DATETIME,
-            blockchain_transaction_hash VARCHAR(66),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id),
-            FOREIGN KEY (distributor_id) REFERENCES distributors(id),
-            FOREIGN KEY (approved_by) REFERENCES users(id)
-        )`);
+        // Purchase Orders table - Updated for cross-database compatibility
+        await runMigration('create_purchase_orders_table', async () => {
+            await run(`CREATE TABLE IF NOT EXISTS purchase_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                po_number VARCHAR(100) UNIQUE NOT NULL,
+                manufacturer_id VARCHAR(50) NOT NULL,
+                distributor_id VARCHAR(50) NOT NULL,
+                total_amount DECIMAL(10,2) NOT NULL,
+                currency VARCHAR(3) DEFAULT 'USD',
+                status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
+                items TEXT NOT NULL,
+                notes TEXT,
+                approved_by INTEGER,
+                approved_at DATETIME,
+                blockchain_transaction_hash VARCHAR(66),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+            )`);
+            
+            // Create indexes for purchase_orders table
+            await run(`CREATE INDEX IF NOT EXISTS idx_po_po_number ON purchase_orders(po_number)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_po_manufacturer ON purchase_orders(manufacturer_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_po_distributor ON purchase_orders(distributor_id)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_orders(status)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_po_approved_by ON purchase_orders(approved_by)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_po_created_at ON purchase_orders(created_at)`);
+        });
 
         // Insert sample manufacturer data if not exists
         await run(`INSERT OR IGNORE INTO manufacturers (id, name, wallet_address, permissions) VALUES 
