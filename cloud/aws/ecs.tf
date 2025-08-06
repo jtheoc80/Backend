@@ -56,6 +56,10 @@ resource "aws_ecs_task_definition" "app" {
         {
           name      = "JWT_SECRET"
           valueFrom = aws_secretsmanager_secret.jwt_secret.arn
+        },
+        {
+          name      = "PINECONE_API_KEY"
+          valueFrom = aws_secretsmanager_secret.app_secrets.arn
         }
       ]
 

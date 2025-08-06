@@ -97,6 +97,7 @@ resource "aws_secretsmanager_secret_version" "app_secrets" {
     CONTRACT_ADDRESS   = "0xYourValveChainContractAddress"
     PO_CONTRACT_ADDRESS = "0xYourPurchaseOrderContractAddress"
     FEE_WALLET_ADDRESS = "0xYourFeeWalletAddress"
+    PINECONE_API_KEY   = "your-pinecone-api-key-here"
   })
 
   lifecycle {
