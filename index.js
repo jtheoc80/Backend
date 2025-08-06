@@ -27,7 +27,6 @@ const corsOptions = {
     }
     
     // In production, check against allowed origins
-    const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
     if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
