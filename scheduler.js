@@ -349,7 +349,7 @@ const DEFAULT_SCHEDULE = {
             if (this.isRunning) {
                 console.log('Waiting for running process to complete...');
                 let attempts = 0;
-                while (this.isRunning && attempts < this.shutdownTimeoutSeconds) { // Wait up to shutdownTimeoutSeconds
+                while (this.isRunning && attempts < this.shutdownTimeout=10;) { // Wait up to shutdownTimeoutSeconds
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     attempts++;
                 }
