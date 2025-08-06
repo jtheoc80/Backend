@@ -134,7 +134,7 @@ class ValveCrawler {
             });
         }
 
-        return relevantContent.trim().substring(0, 10000); // Limit to 10k characters
+        return relevantContent.trim().substring(0, this.contentLengthLimit); // Limit to configured content length
     }
 
     /**
