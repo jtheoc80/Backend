@@ -115,7 +115,209 @@ SMTP_PASS=your-email-password
 - **JWT_SECRET**: Secret key for JWT token generation (change in production)
 - **RPC_URL**: Ethereum RPC endpoint for blockchain interactions
 
-## Installation
+## Frontend Integration
+
+This backend is designed for seamless integration with frontend applications. It provides a comprehensive REST API with proper CORS configuration, consistent JSON responses, and comprehensive error handling.
+
+### Quick Integration Guide
+
+1. **API Base URL**: `http://localhost:8000` (or your deployed URL)
+2. **All endpoints return JSON responses**
+3. **CORS is pre-configured for development**
+4. **Authentication uses JWT tokens in Authorization header**
+
+### CORS Configuration
+
+The backend automatically handles Cross-Origin Resource Sharing (CORS):
+
+- **Development Mode**: All origins are allowed for easy development
+- **Production Mode**: Only specified origins in `ALLOWED_ORIGINS` environment variable
+- **Credentials**: Supported for authentication cookies/headers
+- **Headers**: Supports `Content-Type`, `Authorization`, and `X-Requested-With`
+- **Methods**: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`
+
+### Environment Configuration for Frontend
+
+Add these variables to your `.env` file:
+
+```env
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:4200,http://localhost:5173
+
+# Set to 'production' to restrict CORS to ALLOWED_ORIGINS only
+NODE_ENV=development
+```
+
+### Authentication Flow
+
+1. **Register/Login** to get JWT token:
+   ```javascript
+   const response = await fetch('http://localhost:8000/api/auth/login', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ username: 'user', password: 'pass' })
+   });
+   const { token } = await response.json();
+   ```
+
+2. **Use token in subsequent requests**:
+   ```javascript
+   const response = await fetch('http://localhost:8000/api/pos', {
+     headers: { 
+       'Authorization': `Bearer ${token}`,
+       'Content-Type': 'application/json'
+     }
+   });
+   ```
+
+### API Response Format
+
+All endpoints return consistent JSON responses:
+
+**Success Response:**
+```json
+{
+  "data": { /* response data */ },
+  "message": "Operation successful",
+  "timestamp": "2025-08-06T02:42:30.811Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Error description",
+  "timestamp": "2025-08-06T02:42:30.811Z"
+}
+```
+
+**Paginated Response:**
+```json
+{
+  "data": [ /* array of items */ ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalCount": 50,
+    "limit": 10,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
+
+### Common Frontend Integration Patterns
+
+#### React/Next.js Example:
+```javascript
+// API service
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const apiCall = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers
+    },
+    ...options
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'API request failed');
+  }
+  
+  return response.json();
+};
+
+// Usage
+const purchaseOrders = await apiCall('/api/pos');
+const newPO = await apiCall('/api/pos', {
+  method: 'POST',
+  body: JSON.stringify(poData)
+});
+```
+
+#### Vue.js/Angular Example:
+```javascript
+// axios configuration
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8000',
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// Request interceptor for auth
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Usage
+const { data } = await api.get('/api/pos');
+const response = await api.post('/api/pos', poData);
+```
+
+### Error Handling
+
+The API provides consistent error responses that frontend can handle uniformly:
+
+```javascript
+try {
+  const response = await fetch('/api/pos', { method: 'POST', ... });
+  if (!response.ok) {
+    const error = await response.json();
+    
+    // Handle specific error cases
+    switch (response.status) {
+      case 401:
+        // Redirect to login
+        break;
+      case 403:
+        // Show unauthorized message
+        break;
+      case 422:
+        // Show validation errors
+        break;
+      default:
+        // Show generic error
+        console.error(error.error);
+    }
+  }
+} catch (networkError) {
+  // Handle network/connection errors
+  console.error('Network error:', networkError.message);
+}
+```
+
+### Development vs Production
+
+**Development Features:**
+- CORS allows all origins
+- Detailed error messages with stack traces
+- Additional debugging endpoints
+
+**Production Configuration:**
+- Restricted CORS origins via `ALLOWED_ORIGINS`
+- Sanitized error messages
+- Enhanced security headers
+
+### Testing API Integration
+
+Test your frontend integration with these endpoints:
+
+1. **Health Check**: `GET /api/health` (no auth required)
+2. **User Registration**: `POST /api/auth/register`
+3. **User Login**: `POST /api/auth/login`
+4. **Protected Resource**: `GET /api/pos` (requires auth)
+
+### WebSocket/Real-time Updates
+
+For real-time features, consider implementing WebSocket connections or Server-Sent Events. The current API supports polling patterns with efficient pagination.
 
 1. Clone the repository:
 ```bash
