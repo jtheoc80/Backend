@@ -17,12 +17,8 @@ class ValveGPTScheduler {
             totalContentProcessed: 0,
             totalEmbeddingsGenerated: 0
         };
-const DEFAULT_SCHEDULE = {
-  // Define your default schedule structure
-  interval: 'daily',
-  time: '00:00',
-};
-
+        // Default cron schedule: every 6 hours
+        this.defaultSchedule = '0 */6 * * *';
     }
 
     /**
